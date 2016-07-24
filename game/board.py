@@ -9,6 +9,10 @@ class Map:
     On maps, all integers represent "NOTHINGNESS". All other objects
     shown on maps should be a subclass of _WorldObject.
 
+    0: represents complete nothingness
+    1: represents place where a _WorldObject _was_ but is not anymore
+    2: represents place where an Item _was_ but is not anymore
+
     When trying to extract or set information to the board, you should
     do it like this board[y_coordinate][x_coordinate]
     """
@@ -25,12 +29,16 @@ class Map:
         """
         map_ = ""
         for row in self.board:
-            for index, place in enumerate(row):
-                if isinstance(place, int):
-                    map_ += " . "
-                elif isinstance(place, _WorldObject):
-                    map_ += place.letter
-            map_ += "\n"
+            map_ += "."
+            for index, object_ in enumerate(row):
+                if isinstance(object_, int):
+                    map_ += "   "
+                elif isinstance(object_, _WorldObject):
+                    map_ += object_.letter
+                elif isinstance(object_, Item):
+                    if not object_.has_owner:
+                        map_ += object_.letter
+            map_ += ". \n"
         return map_
 
     def __repr__(self):
@@ -45,10 +53,12 @@ class Map:
         """
         position_x = world_object.position_x
         position_y = world_object.position_y
-        if not self._is_valid_position(position_x, position_y):
+
+        if not self.is_valid_position(position_x, position_y):
             print("Looks like something is already there... or maybe "
                   "I'm going too far away?")
             now_on_map = False
+
         else:
             place = self.board[position_y][position_x]
             self.board[position_y][position_x] = world_object
@@ -61,7 +71,7 @@ class Map:
         old_position and new_position must tuples of (x,y) coordinates
         Return True if it was moved, False if not.
         """
-        if self._is_valid_position(new_x, new_y):
+        if self.is_valid_position(new_x, new_y):
             self.board[new_y][new_x] = self.board[old_y][old_x]
             self.board[old_y][old_x] = 0
             was_moved = True
@@ -71,7 +81,7 @@ class Map:
         return was_moved
 
 
-    def remove_object_from_map(self, object_position_x, object_position_y):
+    def remove_object(self, object_position_x, object_position_y):
         """Removes an object from the map given its position.
         Of course, we cannot remove nothingness from the map.
         Returns the deleted object if an object was found, None
@@ -79,12 +89,14 @@ class Map:
         """
         object_ = self.board[object_position_y][object_position_x]
         if isinstance(object_, _WorldObject):
-            self.board[object_position_y][object_position_x] = 0
+            self.board[object_position_y][object_position_x] = 1
             return object_
+        elif isinstance(object_, Item):
+            self.board[object_position_y][object_position_x] = 2
         else:
             return None
 
-    def _is_valid_position(self, pos_x, pos_y):
+    def is_valid_position(self, pos_x, pos_y):
         """Returns False if the position is not valid (ie: not inside map
         or already occupied). True otherwise.
         """
@@ -107,8 +119,7 @@ class Map:
 
     def _is_position_outside_map(self, pos_x, pos_y):
         """Return True if a given position is found within the limits
-        of the board.
-        """
+        of the board.  """
         if len(self.board) > pos_y and len(self.board[pos_y]) > pos_x:
             is_outside = False
         else:
@@ -146,6 +157,40 @@ class _WorldObject:
         self.position_x = position_x
         self.position_y = position_y
 
+    def get_surroundings(self):
+        """If object has a home_map, return a list of 4 elems which surround
+        the _WorldObject. Position of elements is clockwise:
+        Up, Right, Down, Right. Sample output:
+        [0, Key, Door, 2]
+        That'd correspond to this view on the map.
+              0
+        2 OBJECT Key
+             DOOR
+
+        If _WorldObject is on the side of the board and there's nothing
+        at "Left", that position will be filled with None.
+
+        If object doesn't have a home_map the function will return None
+        """
+        if self.home_map is None:
+            return None
+
+        map_ = self.home_map.board
+        surroundings = []
+
+        up = (self.position_x, self.position_y - 1)
+        left = (self.position_x - 1, self.position_y)
+        down = (self.position_x, self.position_y + 1)
+        right = (self.position_x + 1, self.position_y)
+
+        for position in (up, right, down, left):
+            if self.home_map.is_valid_position(position[0], position[1]):
+                surroundings.append(map_[position[0]][position[1]])
+            else:
+                surroundings.append(None)
+
+        return surroundings
+
     def move(self, direction):
         """Move the object in a certain direction.
         If the object has an associated map, move the object there too.
@@ -167,6 +212,8 @@ class _WorldObject:
                 # values
                 self.position_x = old_pos[0]
                 self.position_y = old_pos[1]
+
+        return self.position_x, self.position_y
 
     def __move_up(self):
         self.position_y -= 1

@@ -1,8 +1,10 @@
 from game.board import Map, Door, Character
+from game.items import Key
 
 map_ = Map(10, 10)
 bruma = Character(0, 0, "Bruma")
 door = Door(5, 5)
+key = Key(
 map_.put_object(bruma)
 map_.put_object(door)
 print(map_)
