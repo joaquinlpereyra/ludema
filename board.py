@@ -70,6 +70,7 @@ class Map:
             was_moved = False
         return was_moved
 
+
     def remove_object_from_map(self, object_position_x, object_position_y):
         """Removes an object from the map given its position.
         Of course, we cannot remove nothingness from the map.
@@ -87,23 +88,37 @@ class Map:
         """Returns False if the position is not valid (ie: not inside map
         or already occupied). True otherwise.
         """
-        inside_map = self._is_position_inside_map
-        occupied = self._is_position_occupied
-        if not inside_map(pos_x, pos_y) or occupied(pos_x, pos_y):
-            valid_position = False
+        conditions = (self._is_position_outside_map,
+                      self._is_position_occupied,
+                      self._is_position_negative)
+        for condition in conditions:
+            condition_failed = condition(pos_x, pos_y)
+            if condition_failed:
+                valid_position = False
+                break
+
+        # an else clause after a loop means 'execute if the loop actually
+        # looped trought everything'
         else:
             valid_position = True
+
         return valid_position
 
-    def _is_position_inside_map(self, pos_x, pos_y):
+    def _is_position_outside_map(self, pos_x, pos_y):
         """Return True if a given position is found within the limits
         of the board.
         """
         if len(self.board) > pos_y and len(self.board[pos_y]) > pos_x:
-            is_inside = True
+            is_outside = False
         else:
-            is_inside = False
-        return is_inside
+            is_outside = True
+        return is_outside
+
+    def _is_position_negative(self, pos_x, pos_y):
+        if pos_x < 0 or pos_y < 0:
+            return True
+        else:
+            return False
 
     def _is_position_occupied(self, pos_x, pos_y):
         """Return True if a given position if already occupied by other
@@ -144,15 +159,20 @@ class _WorldObject:
         new_pos = (self.position_x, self.position_y)
 
         if self.home_map:
-            print(old_pos, new_pos)
-            self.home_map.move_object(old_pos[0], old_pos[1],
-                                      new_pos[0], new_pos[1])
+            moved_success = self.home_map.move_object(old_pos[0], old_pos[1],
+                                                      new_pos[0], new_pos[1])
+
+            if not moved_success:
+                # if it couldn't be moved, restore my position to original
+                # values
+                self.position_x = old_pos[0]
+                self.position_y = old_pos[1]
 
     def __move_up(self):
-        self.position_y += 1
+        self.position_y -= 1
 
     def __move_down(self):
-        self.position_y -= 1
+        self.position_y += 1
 
     def __move_right(self):
         self.position_x += 1
@@ -160,15 +180,52 @@ class _WorldObject:
     def __move_left(self):
         self.position_x -= 1
 
+
 class Character(_WorldObject):
+    """The user Character. This will be controlled by the
+    user."""
     def __init__(self, pos_x, pos_y, name, items=[]):
         _WorldObject.__init__(self, pos_x, pos_y)
         self.letter = " \u03A8 " # 'Ψ'
         self.name = name
         self.items = items
 
+    def use_item(self, item):
+        """Uses item _item_ on the home_map of the character. Returns
+        the action specified by the item."""
+
+        def item_is_usable(item):
+            """Check if item is usable by the character."""
+            if not isinstance(item, Item):
+                print("That's not really an item, dude...")
+                usable = False
+            elif item not in self.items:
+                print("Mhmm... you don't really have that. How could you use it?")
+                usable = False
+            else:
+                usable = True
+            return usable
+
+        if item_is_usable(item):
+            #XXX: ITEM CLASS STILL NEEDS IMPLEMENTING
+            self.items.remove(item)
+            action = item.do_action(self.home_map)
+        else:
+            action = None
+
+        return action
+
+class NPC(_WorldObject):
+    """A non-playable character."""
+    # TODO: implement
+    # XXX: Should this inherit from Character, too? After all, it is a
+    # non playable CHARACTER.
+    pass
+
 class Door(_WorldObject):
+    """A simple door."""
     def __init__(self, pos_x, pos_y, is_open=False):
         _WorldObject.__init__(self, pos_x, pos_y)
         self.letter = " D* " if is_open else " D "
         self.is_open = is_open
+

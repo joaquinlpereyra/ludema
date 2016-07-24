@@ -28,5 +28,7 @@ mappings = {"up" : go_up,
             "left" : go_left,
             "show map" : show_map}
 
-order = input("What to do?")
-mappings[order]()
+while True:
+    order = input("What to do?")
+    mappings[order]()
+    print(map_)
