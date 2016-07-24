@@ -1,4 +1,4 @@
-from board import Map, Door, Character
+from game.board import Map, Door, Character
 
 map_ = Map(10, 10)
 bruma = Character(0, 0, "Bruma")

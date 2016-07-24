@@ -91,6 +91,7 @@ class Map:
         conditions = (self._is_position_outside_map,
                       self._is_position_occupied,
                       self._is_position_negative)
+
         for condition in conditions:
             condition_failed = condition(pos_x, pos_y)
             if condition_failed:
@@ -149,7 +150,7 @@ class _WorldObject:
         """Move the object in a certain direction.
         If the object has an associated map, move the object there too.
         """
-        dispatch = {"right" : self.__move_up,
+        dispatch = {"right" : self.__move_right,
                     "left" : self.__move_left,
                     "up" : self.__move_up,
                     "down" : self.__move_down}
@@ -161,7 +162,6 @@ class _WorldObject:
         if self.home_map:
             moved_success = self.home_map.move_object(old_pos[0], old_pos[1],
                                                       new_pos[0], new_pos[1])
-
             if not moved_success:
                 # if it couldn't be moved, restore my position to original
                 # values
