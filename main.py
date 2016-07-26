@@ -1,12 +1,13 @@
-from game.board import Map, Door, Character
+from game.board import Board
+from game.pieces import Door, _Character
 from game.items import Key
 
-map_ = Map(10, 10)
-bruma = Character(0, 0, "Bruma")
-door = Door(5, 5)
-key = Key(
-map_.put_object(bruma)
-map_.put_object(door)
+map_ = Board(10, 10)
+bruma = _Character("Bruma")
+door = Door()
+map_.put_piece(bruma, 2, 2)
+map_.put_piece(door, 5, 5)
+
 print(map_)
 
 def go_up():
