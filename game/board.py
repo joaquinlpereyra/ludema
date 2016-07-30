@@ -1,7 +1,30 @@
+from collections import namedtuple
+
 from game.board_exceptions import OutOfBoardError, PositionOccupiedError
-from game.piece_exceptions import PieceIsNotOnThisBoardError
-from game.items import _Item
-from game.pieces import _Piece
+from game.pieces_exceptions import PieceIsNotOnThisBoardError
+
+
+# this namedtuple thing is very interesting: http://goo.gl/Xs5fx5
+# Pos is short for 'Position', obviously
+Position = namedtuple('Position', ('x', 'y'))
+
+
+class Tile:
+    """A tile is the atomic unit of the Board. Every tile must have a
+    board to live in. It may or may not hold a piece.
+    """
+
+    def __init__(self, board, piece=None):
+        self.board = board
+        self.piece = piece
+
+    def __repr__(self):
+        return ("This is the tile on map {0} holding "
+                "the piece {1}".format(self.board.name, self.piece) +
+                super().__repr__())
+
+    def __str__(self):
+        return self.piece.letter if self.piece else None
 
 
 class Board:
@@ -22,13 +45,22 @@ class Board:
     When trying to extract or set information to the board, you should
     do it like this board[y_coordinate][x_coordinate]
     """
-    def __init__(self, size_x, size_y):
+    def __init__(self, name, size_x, size_y):
         """Initializates a simple matrix to represent the map and an
         empty dictionary of pieces in the map.
         """
-        row = [0 for _ in range(size_x)]
-        self.board = [row.copy() for _ in range(size_y)]
-        self.pieces = {}
+        self.name = name
+        self.size_x = size_x
+        self.size_y = size_y
+        self.board = self.__create_board()
+
+    def __create_board(self):
+        board = {}
+        for x in range(self.size_x):
+            for y in range(self.size_y):
+                pos = Position(x, y)
+                board[pos] = Tile(self)
+        return board
 
     def __str__(self):
         """How the string will be printed.
@@ -37,14 +69,10 @@ class Board:
         or item.
         """
         map_ = ""
-        for row in self.board:
-            map_ += "."
-            for place in row:
-                if place in self.pieces:
-                    map_ += place.letter
-                else:
-                    map_ += "  "
-            map_ += ". \n"
+        for position, tile in iter(sorted(self.board.items())):
+            map_ += " . " if tile.piece is None else tile.piece.letter
+            if position.y == self.size_y-1:
+                map_ += "\n"
         return map_
 
     def __repr__(self):
@@ -53,33 +81,31 @@ class Board:
         """
         return self.__str__() + '\n' + super().__repr__()
 
-    def put_piece(self, piece, pos_x, pos_y):
+    def put_piece(self, piece, position):
         """Puts a piece on the board. Raises either OutOfBoardError or
         PossitionOccupiedError if that wasn't possible.
         """
         try:
-            self.__try_moving_there(pos_x, pos_y)
+            self.__try_moving_there(position)
         except (OutOfBoardError, PositionOccupiedError) as e:
             raise e
 
-        self.board[pos_y][pos_x] = piece
-        self.pieces[piece] = (pos_x, pos_y)
+        destinity_tile = self.board[position]
+        destinity_tile.piece = piece
         piece.home_board = self
 
-    def move_piece(self, piece, new_x, new_y):
+    def move_piece(self, piece, new_position):
         """Moves piece to position (nex_x, new_y). Raises
         an either PositionOccupiedError or OutOfBoardError if that
         wasn't possible.
         """
         try:
-            old_pos_x, old_pos_y = piece.position_x, piece.position_y
-            self.pieces[piece] = (new_x, new_y)
-            self.__put_nothingness_where_piece_was(piece)
-            self.put_piece(piece, new_x, new_y)
+            self.__put_nothingness_where_piece_is(piece)
+            self.put_piece(piece, new_position)
         except (OutOfBoardError, PositionOccupiedError):
             raise
-        except KeyError:
-            raise PieceIsNotOnThisBoardError(piece, self)
+        except PieceIsNotOnThisBoardError:
+            raise
 
     def remove_piece(self, piece):
         """Removes an object from the map given its position.
@@ -105,22 +131,19 @@ class Board:
             valid_position = False
         return valid_position
 
-    def __put_nothingness_where_piece_was(self, piece):
+    def __put_nothingness_where_piece_is(self, piece):
         """The board has a backend value consisting of integer where
         nothingness is found. This method puts the corresponding
         integer value of nothingness in the piece position.
         Be very careful when using this: only if you're removing a piece
         or moving one.
         """
-        piece_pos_x, piece_pos_y = piece.position_x, piece.position_y
-        if isinstance(piece, _Piece):
-            self.board[piece_pos_y][piece_pos_x] = 1
-        elif isinstance(piece, _Item):
-            self.board[piece_pos_y][piece_pos_x] = 2
+        try:
+            self.tiles[piece.position].piece = None
+        except KeyError:
+            raise PieceIsNotOnThisBoardError(piece, self)
 
-        return self.board[piece_pos_y][piece_pos_x]
-
-    def __try_moving_there(self, pos_x, pos_y):
+    def __try_moving_there(self, position):
         """Raises either a OutOfBoardError or a PositionOccupiedError
         if the position given is out of the board or occupied."""
         conditions = (self.__check_position_inside_map,
@@ -128,14 +151,14 @@ class Board:
 
         for condition in conditions:
             try:
-                condition(pos_x, pos_y)
+                condition(position)
             except (OutOfBoardError, PositionOccupiedError) as e:
                 raise e
 
-    def __check_position_inside_map(self, pos_x, pos_y):
+    def __check_position_inside_map(self, position):
         """Return True if a given position is found within the limits
         of the board.  """
-        if len(self.board) < pos_y and len(self.board[pos_y]) < pos_x:
+        if len(self.board) < position.y and len(self.board[pos_y]) < pos_x:
             raise OutOfBoardError(pos_x, pos_y)
 
     def __check_position_occupied(self, pos_x, pos_y):

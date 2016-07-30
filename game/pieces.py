@@ -20,11 +20,15 @@ class _Piece:
     def position_x(self):
         if self.home_board is not None:
             return self.home_board.pieces[self][0]
+        else:
+            raise CharacterIsNotOnABoardError
 
     @property
     def position_y(self):
         if self.home_board is not None:
             return self.home_board.pieces[self][1]
+        else:
+            raise CharacterIsNotOnABoardError
 
     @property
     def surroundings(self):
