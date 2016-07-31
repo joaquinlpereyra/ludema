@@ -1,6 +1,7 @@
-from game.board_exceptions import OutOfBoardError, PositionOccupiedError
-from game.pieces_exceptions import CharacterDoesNotHaveItemError
-from game.pieces_exceptions import CharacterIsNotOnABoardError
+from game.exceptions import (PieceDoesNotHaveItemError, PieceIsNotOnATileError,
+                             PieceIsNotOnThisBoardError, OutOfBoardError,
+                             PositionOccupiedError)
+
 
 class _Piece:
     """Defines a Piece, which is _anything_ that can
@@ -10,89 +11,72 @@ class _Piece:
     as superclass.
     """
 
-    def __init__(self):
+    def __init__(self, name):
         """Initializates an object with a given position
         and its associated map startin on None.
         """
-        self.home_board = None
+        self.name = name
 
     @property
-    def position_x(self):
-        if self.home_board is not None:
-            return self.home_board.pieces[self][0]
-        else:
-            raise CharacterIsNotOnABoardError
+    def home_tile(self):
+        return self.__home_tile
+
+    @home_tile.setter
+    def home_tile(self, home_tile):
+        self.__home_tile = home_tile
 
     @property
-    def position_y(self):
-        if self.home_board is not None:
-            return self.home_board.pieces[self][1]
+    def position(self):
+        if self.home_tile is not None:
+            return self.home_tile.position
         else:
-            raise CharacterIsNotOnABoardError
+            raise PieceIsNotOnATileError(self)
 
     @property
     def surroundings(self):
-        """If object has a home_map, return a list of 4 elems which surround
-        the _WorldObject. Position of elements is clockwise:
-        Up, Right, Down, Right. Sample output:
-        [0, Key, Door, 2]
-        That'd correspond to this view on the map.
-              0
-        2 OBJECT Key
-             DOOR
+        """If object has a home_tile, return a dictionary with like
+        {Direction : Tile or None} for each of the four cardinal directions.
+        Value will be None if the direction is outside the map.
 
-        If _WorldObject is on the side of the board and there's nothing
-        at "Left", that position will be filled with None.
-
-        If object doesn't have a home_map the function will return None
+        Will raise an CharacterIsNotOnATileError if self.home_tile is None.
         """
-        if self.home_board is None:
-            raise CharacterIsNotOnABoardError(self)
 
-        adjacent = {"right": (self.position_x + 1, self.position_y),
-                    "left": (self.position_x - 1, self.position_y),
-                    "up": (self.position_x, self.position_y - 1),
-                    "down": (self.position_x, self.position_y - 1)}
+        if self.home_tile is None:
+            raise PieceIsNotOnATileError(self)
 
-        map_ = self.home_board.board
-        surroundings = []
-        for position in adjacent.values():
-            if self.home_board._is_valid_position(position[0], position[1]):
-                surroundings.append(map_[position[0]][position[1]])
-            else:
-                surroundings.append(None)
+        board = self.home_tile.board
+        surroundings = board.get_adjacent_to_tile(self.home_tile)
 
         return surroundings
 
-    def move(self, direction):
+    def move(self, tile):
         """Move the object in a certain direction.
-        If the object has an associated map, move the object there too.
-        Return the new position of the piece as an (x,y) tuple.
+        That means: unlink the piece from its current tile and link it
+        to the new tile.
 
-        Direction must be a string equal to "up", "down", "left" or "right".
+        Raise CharacterIsNotOnATileError if piece didn't already
+        have an associated tile, CharacterIsNotOnThisBoardError if
+        the destinity tile is not on the same board as the current tile,
+        OutOfBoard error if destinity tile is falsey (most probably
+        this means you're tring to move somewhere outside the map)
         """
+        if tile.piece is not None:
+            raise PositionOccupiedError(tile)
+        if not self.home_tile:
+            raise PieceIsNotOnATileError
+        if self.home_tile.board is not self.home_tile.board:
+            raise PieceIsNotOnThisBoardError
+        if not tile:
+            raise OutOfBoardError
 
-        # XXX: fix duplicated dictionary
-        adjacent = {"right": (self.position_x + 1, self.position_y),
-                    "left": (self.position_x - 1, self.position_y),
-                    "up": (self.position_x, self.position_y - 1),
-                    "down": (self.position_x, self.position_y - 1)}
-
-        new_pos_x, new_pos_y = adjacent[direction]
-
-        if self.home_board:
-            try:
-                self.home_board.move_piece(self, new_pos_x, new_pos_y)
-            except (OutOfBoardError, PositionOccupiedError):
-                raise
-
-        return self.position_x, self.position_y
+        self.home_tile.piece = None
+        tile.piece = self
 
 
 class Door(_Piece):
     """A simple door."""
-    def __init__(self, is_open=False):
-        _Piece.__init__(self)
+    def __init__(self, name, is_open=False):
+        _Piece.__init__(self, name)
         self.letter = " D* " if is_open else " D "
         self.is_open = is_open
 
@@ -102,7 +86,7 @@ class _Character(_Piece):
     Should not be used directly.
     """
     def __init__(self, name, items=[]):
-        _Piece.__init__(self)
+        _Piece.__init__(self, name)
         self.letter = " \u03A8 "  # 'Ψ'
         self.name = name
         self.items = items
@@ -111,7 +95,7 @@ class _Character(_Piece):
         """Uses item _item_ on the home_map of the character. Returns
         the action specified by the item."""
         if item not in self.items:
-            raise CharacterDoesNotHaveItemError
+            raise PieceDoesNotHaveItemError
 
         self.items.remove(item)
         action = item.do_action(self.home_map)

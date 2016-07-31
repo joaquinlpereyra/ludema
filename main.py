@@ -1,26 +1,31 @@
 from game.board import Board
+from game.utils import Position, Direction
 from game.pieces import Door, _Character
 from game.items import Key
 
-map_ = Board(10, 10)
+map_ = Board("Main", 2, 2)
 bruma = _Character("Bruma")
-door = Door()
-map_.put_piece(bruma, 2, 2)
-map_.put_piece(door, 5, 5)
+door = Door("A")
+map_.put_piece(bruma, Position(0,0))
+map_.put_piece(door, Position(1,1))
 
 print(map_)
 
 def go_up():
-    bruma.move("up")
+    up_tile = bruma.surroundings[Direction.UP]
+    bruma.move(up_tile)
 
 def go_down():
-    bruma.move("down")
+    down_tile = bruma.surroundings[Direction.DOWN]
+    bruma.move(down_tile)
 
 def go_right():
-    bruma.move("right")
+    right_tile = bruma.surroundings[Direction.RIGHT]
+    bruma.move(right_tile)
 
 def go_left():
-    bruma.move("left")
+    left_tile = bruma.surroundings[Direction.LEFT]
+    bruma.move(left_tile)
 
 def show_map():
     print(map_)
