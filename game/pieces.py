@@ -94,7 +94,7 @@ class Character(Piece):
         """Uses item _item_ on the home_map of the character. Returns
         the action specified by the item."""
         if item not in self.items:
-            raise PieceDoesNotHaveItemError
+            raise PieceDoesNotHaveItemError(self, item)
         if not self.surroundings:
             raise PieceIsNotOnATileError
 

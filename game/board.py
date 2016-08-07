@@ -92,7 +92,14 @@ class Board:
         rows = board_from_column_to_rows()
         for row in rows:
             for tile in row:
-                map_ += " {0} ".format(str(tile))
+                name_length = len(str(tile))
+                if name_length == 2:
+                    map_ += " {0}".format(str(tile))
+                elif name_length == 3:
+                    map_ += "{0}".format(str(tile))
+                else:
+                    map_ += " {0} ".format(str(tile))
+
             map_ += "\n"
         return map_
 
