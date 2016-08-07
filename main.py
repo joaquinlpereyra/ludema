@@ -5,7 +5,7 @@ from game.pieces import Character
 from game_pieces import Door, Key
 
 map_ = Board("Main", 20, 20)
-bruma = Character("Y", "Bruma")
+bruma = Character("\u03A8", "Bruma")
 door = Door("Door1")
 key = Key("Key1", door, letter="K")
 map_.put_piece(bruma, Position(0,0))
@@ -52,6 +52,7 @@ def control_bruma():
 
 def bruma_information(): print("Name: {0} / Position: {1}".format(bruma.name, bruma.position))
 def show_map(): print(str(map_))
+
 screen = Screen(show_map, bruma_information, control_bruma)
 while True:
     screen.show()

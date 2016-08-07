@@ -79,16 +79,33 @@ class Piece:
         self.home_tile.piece = None
         tile.piece = self
 
+    def move_up(self):
+        return self.move(self.surroundings[0])
+
+    def move_right(self):
+        return self.move(self.surroundings[1])
+
+    def move_down(self):
+        return self.move(self.surroundings[2])
+
+    def move_left(self):
+        return self.move(self.surroundings[3])
+
 
 class Character(Piece):
     """A baseclass for all characters, be them the Player or NPCs.
     Should not be used directly.
     """
-    def __init__(self, letter, name, items=[]):
+    def __init__(self, letter, name, items=[], health=10):
         Piece.__init__(self, letter, name)
-        # self.letter = " \u03A8 "  # 'Ψ'
         self.letter = letter
+        self.name = name
         self.items = items
+        self.health = health
+
+    @property
+    def is_dead(self):
+        return False if self.health else True
 
     def use_item(self, item):
         """Uses item _item_ on the home_map of the character. Returns
@@ -108,6 +125,17 @@ class Character(Piece):
 
         self.items.append(tile_where_item_is.piece)
         tile_where_item_is.piece = None
+
+    def grab_item_from_surroundings(self):
+        for tile in filter(lambda i: i not None, self.surroundings):
+            try:
+                grab_item(tile)
+                break
+            except NoItemToGrab:
+                continue
+        else:
+            raise NoItemToGrab
+
 
 class Player(Character):
     """The Player character."""

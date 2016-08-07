@@ -18,10 +18,12 @@ class ShortRangeItem(Item):
 
     @property
     def range(self):
+        def only_valid_from(s): return list(filter(lambda t: t is not None, s))
+
         if self.owner:
-            return self.owner.surroundings
+            return only_valid_from(self.owner.surroundings)
         else:
-            return self.surroundings if self.home_tile is not None else None
+            return only_valid_from(self.surroundings) if self.home_tile else None
 
     def do_action(self):
         raise NotImplementedError("Every item should have its own do_action method!")
