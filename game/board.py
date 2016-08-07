@@ -42,7 +42,7 @@ class _Tile:
         return original + custom
 
     def __str__(self):
-        return self.piece.letter if self.piece else " . "
+        return self.piece.letter if self.piece else "."
 
 
 class Board:
@@ -92,7 +92,7 @@ class Board:
         rows = board_from_column_to_rows()
         for row in rows:
             for tile in row:
-                map_ += str(tile)
+                map_ += " {0} ".format(str(tile))
             map_ += "\n"
         return map_
 

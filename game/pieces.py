@@ -3,7 +3,7 @@ from game.exceptions import (PieceDoesNotHaveItemError, PieceIsNotOnATileError,
                              PositionOccupiedError)
 
 
-class _Piece:
+class Piece:
     """Defines a Piece, which is _anything_ that can
     be represented on the map.
 
@@ -11,11 +11,18 @@ class _Piece:
     as superclass.
     """
 
-    def __init__(self, name):
-        """Initializates an object with a given position
-        and its associated map startin on None.
+    def __init__(self, name, letter):
+        """Initializes a Piece with a given name, letter and its home tile
+        on None. The home tile should only be set by assigning the piece
+        to a tile.
+
+        args:
+        name: string, the name of the piece ("John", "Door1", etc)
+        letter: string, len(string) == 1, representation of piece on board
         """
         self.name = name
+        self.letter = "{0}".format(letter)
+        self.__home_tile = None
 
     @property
     def home_tile(self):
@@ -73,22 +80,14 @@ class _Piece:
         tile.piece = self
 
 
-class Door(_Piece):
-    """A simple door."""
-    def __init__(self, name, is_open=False):
-        _Piece.__init__(self, name)
-        self.letter = " D* " if is_open else " D "
-        self.is_open = is_open
-
-
-class _Character(_Piece):
+class Character(Piece):
     """A baseclass for all characters, be them the Player or NPCs.
     Should not be used directly.
     """
-    def __init__(self, name, items=[]):
-        _Piece.__init__(self, name)
-        self.letter = " \u03A8 "  # 'Ψ'
-        self.name = name
+    def __init__(self, letter, name, items=[]):
+        Piece.__init__(self, letter, name)
+        # self.letter = " \u03A8 "  # 'Ψ'
+        self.letter = letter
         self.items = items
 
     def use_item(self, item):
@@ -96,19 +95,27 @@ class _Character(_Piece):
         the action specified by the item."""
         if item not in self.items:
             raise PieceDoesNotHaveItemError
+        if not self.surroundings:
+            raise PieceIsNotOnATileError
 
         self.items.remove(item)
-        action = item.do_action(self.home_map)
+        action = item.do_action()
         return action
 
+    def grab_item(self, tile_where_item_is):
+        if not isinstance(tile_where_item_is.piece, Piece):
+            raise NoItemToGrab
 
-class Player(_Character):
+        self.items.append(tile_where_item_is.piece)
+        tile_where_item_is.piece = None
+
+class Player(Character):
     """The Player character."""
     # TODO: IMPLEMENT
     pass
 
 
-class NPC(_Character):
+class NPC(Character):
     """A non-playable character."""
     # TODO: implement
     pass
