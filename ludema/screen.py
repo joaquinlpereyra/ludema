@@ -13,8 +13,10 @@ class Screen:
 
     def clear(self):
         try:
-            os.system('clear')  # for Linux/OS X
+            pass
+            #os.system('clear')  # for Linux/OS X
         except:
-            os.system('cls')  # for Windows
+            pass
+            #os.system('cls')  # for Windows
 
 

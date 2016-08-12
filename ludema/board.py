@@ -1,3 +1,4 @@
+import pieces
 from game.utils import Position, Direction
 from game.exceptions import (PieceIsNotOnThisBoardError, OutOfBoardError,
                              PositionOccupiedError)
@@ -13,13 +14,13 @@ be made in any other way than by using Position.
 """
 
 
-class _Tile:
+class Tile:
     """A tile is the atomic unit of the Board. Every tile must have a
     board to live in. Every tile must have a position on said board.
     A tile may or may not hold a piece.
 
     """
-    def __init__(self, board, position, piece=None):
+    def __init__(self, board, position, piece=None, walkable=True):
         self.board = board
         self.position = position
         self.__piece = piece
@@ -59,24 +60,28 @@ class Board:
     Note that the last two arguments of the Tile are actually ony one
     Postition namedtuple.
     """
-    def __init__(self, name, size_x, size_y):
+    def __init__(self, name, size_x, size_y, empty_repr=" ", turn_limit=-1):
         """Initializes the object with a name and a board."""
         self.name = name
         self.size_x = size_x
         self.size_y = size_y
+        self.empty_repr = empty_repr
         self.board = self.__create_board(size_x, size_y)
+        self.players = []
+        self.npcs = []  # non playable characters
+        self.turn = 0
 
     def __create_board(self, size_x, size_y):
         """Return a board as described in the docstring of the class."""
         board = []
         for x in range(size_x):
-            board.append([_Tile(self, Position(x, y)) for y in range(size_y)])
+            board.append([Tile(self, Position(x, y)) for y in range(size_y)])
         return board
 
     def __str__(self):
         """How the board will represented as a string."""
 
-        # NOTE: this is quite the mess so don' touch unless you know what
+        # NOTE: this is quite the mess so don' touch unless you know
         # what you're doing
 
         def board_from_column_to_rows():
@@ -93,7 +98,9 @@ class Board:
         for row in rows:
             for tile in row:
                 name_length = len(str(tile))
-                if name_length == 2:
+                if not str(tile):
+                    map_ += self.empty_repr
+                elif name_length == 2:
                     map_ += " {0}".format(str(tile))
                 elif name_length == 3:
                     map_ += "{0}".format(str(tile))
@@ -124,6 +131,10 @@ class Board:
 
         destinity_tile = self.board[position.x][position.y]
         destinity_tile.piece = piece
+        if isinstance(piece, pieces.NPC):
+            self.npcs.append(piece)
+        elif isinstance(piece, pieces.Player):
+            self.players.append(piece)
 
     def remove_piece(self, piece):
         """Removes an object from the map given its position.
@@ -162,6 +173,14 @@ class Board:
 
         return adjacent
 
+    def column_on_position(self, x):
+        for y in range(self.size_y):
+            yield self.board[x][y]
+
+    def row_on_postition(self, y):
+        for x in range(self.size_x):
+            yield self.board[x][y]
+
     def _is_valid_position(self, position):
         """Returns True if the position is found inside the map,
         False if not."""
@@ -195,5 +214,6 @@ class Board:
         """Return True if a given position if already occupied by other
         object.
         """
-        if self.board[position.x][position.y].piece is not None:
+        tile = self.board[position.x][position.y]
+        if tile.piece is not None and not tile.piece.walkable:
             raise PositionOccupiedError(self, position)

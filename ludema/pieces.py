@@ -1,6 +1,7 @@
 from game.exceptions import (PieceDoesNotHaveItemError, PieceIsNotOnATileError,
                              PieceIsNotOnThisBoardError, OutOfBoardError,
                              PositionOccupiedError)
+from game.utils import Direction
 
 
 class Piece:
@@ -11,7 +12,7 @@ class Piece:
     as superclass.
     """
 
-    def __init__(self, name, letter):
+    def __init__(self, letter: str, name: str=None, walkable: bool=False):
         """Initializes a Piece with a given name, letter and its home tile
         on None. The home tile should only be set by assigning the piece
         to a tile.
@@ -22,6 +23,7 @@ class Piece:
         """
         self.name = name
         self.letter = "{0}".format(letter)
+        self.walkable = walkable
         self.__home_tile = None
 
     @property
@@ -56,43 +58,79 @@ class Piece:
 
         return surroundings
 
-    def move(self, tile):
-        """Move the object in a certain direction.
-        That means: unlink the piece from its current tile and link it
-        to the new tile.
-
-        Raise CharacterIsNotOnATileError if piece didn't already
-        have an associated tile, CharacterIsNotOnThisBoardError if
-        the destinity tile is not on the same board as the current tile,
-        OutOfBoard error if destinity tile is falsey (most probably
-        this means you're tring to move somewhere outside the map)
+    def on_touch_do(self, touching_piece):
+        """What should the piece do when it is touched by another piece?
+        IE: when a piece tries to move to the position this one occupies.
         """
-        if tile.piece is not None:
-            raise PositionOccupiedError(tile)
+        pass
+
+class MovablePiece(Piece):
+
+    class Movements:
+        def __init__(self, piece, movement_functions=None):
+            if movement_functions is None:
+                self.__default_movements(piece)
+            else:
+                self.__set_movements(movement_functions)
+
+        def __default_movements(self, piece):
+            def up(): return piece.move(piece.surroundings[Direction.UP])
+            def right(): return piece.move(piece.surroundings[Direction.RIGHT])
+            def down(): return piece.move(piece.surroundings[Direction.DOWN])
+            def left(): return piece.move(piece.surroundings[Direction.LEFT])
+            self.__set_movements([up, right, down, left])
+
+        def __set_movements(self, movement_functions):
+            for movement_function in movement_functions:
+                setattr(self, movement_function.__name__, movement_function)
+
+    def __init__(self, letter, name, movements=None, walkable=False):
+        Piece.__init__(letter, name, walkable)
+        self.movements = MovablePiece.Movements(self, movements)
+
+    def __unsafe_move(self, tile):
+        """Move the object in a certain direction, if it can:
+        That means: unlink the piece from its current tile and link it
+        to the new tile; unless there's a piece in the destiny tile already.
+
+        Return True if could move there, False is possition was already
+        ocuppied.
+
+        Can raise a PieceIsNotOnATileError if the piece hasn't been put on a
+        map prior to moving or a PieceIsNotOnThisBoardError if the piece
+        you're trying to move has an associated tile in another board, not
+        the one where the destinity tile is.
+        """
         if not self.home_tile:
             raise PieceIsNotOnATileError
-        if self.home_tile.board is not self.home_tile.board:
+        if self.home_tile.board is not tile.board:
             raise PieceIsNotOnThisBoardError
-        if not tile:
-            raise OutOfBoardError
+
+        if tile.piece is not None:
+            tile.piece.on_touch_do(touching_piece=self)
+            if not tile.piece.walkable:
+                return False
 
         self.home_tile.piece = None
         tile.piece = self
+        return True
 
-    def move_up(self):
-        return self.move(self.surroundings[0])
-
-    def move_right(self):
-        return self.move(self.surroundings[1])
-
-    def move_down(self):
-        return self.move(self.surroundings[2])
-
-    def move_left(self):
-        return self.move(self.surroundings[3])
+    def move(self, tile):
+        if tile:
+            try:
+                return self.__unsafe_move(tile)
+            except (PieceIsNotOnATileError, PieceIsNotOnThisBoardError):
+                return False
+        else:
+            return False
 
 
-class Character(Piece):
+class Wall(Piece):
+    def __init__(self, letter="."):
+        Piece.__init__(self, letter)
+
+
+class Character(MovablePiece):
     """A baseclass for all characters, be them the Player or NPCs.
     Should not be used directly.
     """
@@ -127,23 +165,28 @@ class Character(Piece):
         tile_where_item_is.piece = None
 
     def grab_item_from_surroundings(self):
-        for tile in filter(lambda i: i not None, self.surroundings):
+        for tile in filter(lambda i: i is not None, self.surroundings):
             try:
                 grab_item(tile)
-                break
+                return True
             except NoItemToGrab:
                 continue
         else:
-            raise NoItemToGrab
+            return False
 
 
 class Player(Character):
     """The Player character."""
-    # TODO: IMPLEMENT
-    pass
+    def __init__(self, letter, name, items=[], health=10):
+        Character.__init__(self, letter, name, items, health=10)
 
 
 class NPC(Character):
-    """A non-playable character."""
-    # TODO: implement
-    pass
+    def __init__(self, letter, name, items=[], health=10):
+        Character.__init__(self, letter, name, items)
+
+    def do_passive_action(self):
+        pass
+
+    def do_active_action(self):
+        pass

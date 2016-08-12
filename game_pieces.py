@@ -5,7 +5,7 @@ import game.exceptions
 class Door(Piece):
     """A simple door."""
     def __init__(self, name, is_open=False, letter = "D"):
-        Piece.__init__(self, name, letter)
+        Piece.__init__(self, letter, name)
         self.is_open = is_open
         self.__letter = letter
 
@@ -19,7 +19,7 @@ class Door(Piece):
 
 class Key(ShortRangeItem):
     def __init__(self, name, target_door, owner=None, letter="K"):
-        ShortRangeItem.__init__(self, name, letter, owner)
+        ShortRangeItem.__init__(self, letter, name, owner)
         self.target_door = target_door
 
     def do_action(self):
@@ -31,4 +31,5 @@ class Key(ShortRangeItem):
         for piece in surrounding_pieces:
             if piece is self.target_door:
                 self.target_door.is_open = True
+                print("DOOR OPEN")
                 break
