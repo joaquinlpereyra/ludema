@@ -2,6 +2,28 @@ class _GameError(Exception):
     def __init__(self):
         pass
 
+class CharacterCantAttackError(_GameError):
+    def __init__(self, character):
+        _GameError.__init__(self)
+        self.character = character
+
+    def __str__(self):
+        error_string = ("The Character {0} doesn't have an attack_damage "
+                        "value and thus cannot attack.".format(self.character))
+        return error_string
+
+class TileIsEmptyError(_GameError):
+    def __init__(self, character, tile):
+        _GameError.__init__(self)
+        self.character = character
+        self.tile = tile
+
+    def __str__(self):
+        error_string = ("The Character {0} tried to attack tile {1}, but "
+                        "that tile does not have a character."
+                        .format{self.character, self.tile})
+        return error_string
+
 class PieceDoesNotHaveItemError(_GameError):
     def __init__(self, piece, item):
         _GameError.__init__(self)
