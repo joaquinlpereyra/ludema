@@ -1,6 +1,6 @@
-from game.pieces import Piece, Character
-from game.items import Item, ShortRangeItem
-import game.exceptions
+from ludema.pieces import Piece, Character
+from ludema.items import Item, ShortRangeItem
+import ludema.exceptions
 
 class Door(Piece):
     """A simple door."""

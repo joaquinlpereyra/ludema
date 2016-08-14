@@ -1,4 +1,4 @@
-from game.pieces import Piece
+from ludema.pieces import Piece
 
 class Item(Piece):
     def __init__(self, name, letter, owner=None):

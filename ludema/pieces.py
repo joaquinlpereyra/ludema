@@ -1,7 +1,8 @@
-from game.exceptions import (PieceDoesNotHaveItemError, PieceIsNotOnATileError,
+from ludema.exceptions import (PieceDoesNotHaveItemError, PieceIsNotOnATileError,
                              PieceIsNotOnThisBoardError, OutOfBoardError,
                              PositionOccupiedError)
-from game.utils import Direction
+from ludema.utils import Direction
+from types import MethodType
 
 
 class Piece:
@@ -65,7 +66,6 @@ class Piece:
         pass
 
 class MovablePiece(Piece):
-
     class Movements:
         def __init__(self, piece, movement_functions=None):
             if movement_functions is None:
@@ -82,13 +82,14 @@ class MovablePiece(Piece):
 
         def __set_movements(self, movement_functions):
             for movement_function in movement_functions:
-                setattr(self, movement_function.__name__, movement_function)
+                setattr(self, movement_function.__name__, staticmethod(movement_function))
 
     def __init__(self, letter, name, movements=None, walkable=False):
-        Piece.__init__(letter, name, walkable)
-        self.movements = MovablePiece.Movements(self, movements)
+        Piece.__init__(self, letter, name, walkable)
+        self.move = MovablePiece.Movements(self)
+        import ipdb; ipdb.set_trace()
 
-    def __unsafe_move(self, tile):
+    def _unsafe_move_to_tile(self, tile):
         """Move the object in a certain direction, if it can:
         That means: unlink the piece from its current tile and link it
         to the new tile; unless there's a piece in the destiny tile already.
@@ -115,10 +116,10 @@ class MovablePiece(Piece):
         tile.piece = self
         return True
 
-    def move(self, tile):
+    def move_to_tile(self, tile):
         if tile:
             try:
-                return self.__unsafe_move(tile)
+                return self._unsafe_move_to_tile(tile)
             except (PieceIsNotOnATileError, PieceIsNotOnThisBoardError):
                 return False
         else:
@@ -134,11 +135,11 @@ class Character(MovablePiece):
     """A baseclass for all characters, be them the Player or NPCs.
     Should not be used directly.
     """
-    def __init__(self, letter, name, items=[], health=10):
-        Piece.__init__(self, letter, name)
+    def __init__(self, letter, name, movements=None, items=None, health=10):
+        MovablePiece.__init__(self, letter, name, movements)
         self.letter = letter
         self.name = name
-        self.items = items
+        self.items = items or []
         self.health = health
 
     @property

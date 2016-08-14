@@ -1,6 +1,6 @@
-import pieces
-from game.utils import Position, Direction
-from game.exceptions import (PieceIsNotOnThisBoardError, OutOfBoardError,
+from ludema import pieces
+from ludema.utils import Position, Direction
+from ludema.exceptions import (PieceIsNotOnThisBoardError, OutOfBoardError,
                              PositionOccupiedError)
 
 """

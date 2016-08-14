@@ -1,7 +1,7 @@
-from game.screen import Screen
-from game.board import Board
-from game.utils import Position, Direction
-from game.pieces import Character
+from ludema.screen import Screen
+from ludema.board import Board
+from ludema.utils import Position, Direction
+from ludema.pieces import Character
 from game_pieces import Door, Key
 
 map_ = Board("Main", 5, 5)
@@ -13,18 +13,6 @@ map_.put_piece(door, Position(2, 2))
 map_.put_piece(key, Position(3, 3))
 
 def control_bruma():
-    def go_up():
-        bruma.move_up()
-
-    def go_down():
-        bruma.move_down()
-
-    def go_right():
-        bruma.move_right()
-
-    def go_left():
-        bruma.move_left()
-
     def grab_item():
         bruma.grab_item_from_surroundings()
 
@@ -34,10 +22,10 @@ def control_bruma():
     def show_map():
         print(map_)
 
-    mappings = {"up": go_up,
-                "down": go_down,
-                "right": go_right,
-                "left": go_left,
+    mappings = {"up": bruma.move.up,
+                "down": bruma.move.down,
+                "right": bruma.move.right,
+                "left": bruma.move.left,
                 "grab": grab_item,
                 "use": use_key,
                 "show map": show_map}
