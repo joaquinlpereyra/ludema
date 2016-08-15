@@ -12,6 +12,19 @@ class CharacterCantAttackError(_GameError):
                         "value and thus cannot attack.".format(self.character))
         return error_string
 
+class TurnCanOnlyBeIncreased(_GameError):
+    def __init__(self, prev_turn, new_turn):
+        _GameError.__init__(self)
+        self.prev_turn = prev_turn
+        self.new_turn = new_turn
+
+    def __str__(self):
+        error_string = ("Someone tried to set the turn to {0} but the "
+                        "turn was already {1}. You can't go back in time "
+                        "(at least not in turns)".format(self.new_turn,
+                        self.prev_turn))
+        return error_string
+
 class TileIsEmptyError(_GameError):
     def __init__(self, character, tile):
         _GameError.__init__(self)
@@ -21,8 +34,16 @@ class TileIsEmptyError(_GameError):
     def __str__(self):
         error_string = ("The Character {0} tried to attack tile {1}, but "
                         "that tile does not have a character."
-                        .format{self.character, self.tile})
+                        .format(self.character, self.tile))
         return error_string
+
+class NoItemToGrab(_GameError):
+    def __init__(self, character):
+        self.character = character
+
+    def __str__(self):
+        error_string = ("The Character {0} tried to grab an item, "
+                        "but no item was found.".format(self.character))
 
 class PieceDoesNotHaveItemError(_GameError):
     def __init__(self, piece, item):
@@ -43,7 +64,7 @@ class PieceIsNotOnATileError(_GameError):
     def __str__(self):
         error_string = ("The Piece {0} isn't on a tile. Pieces must be "
                         "put on a tile the Board.put_piece method "
-                        "before they can move.".format(self.piece.name))
+                        "before they can perform actions.".format(self.piece.name))
         return error_string
 
 class PieceIsNotOnThisBoardError(_GameError):

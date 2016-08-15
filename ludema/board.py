@@ -43,7 +43,7 @@ class Tile:
         return original + custom
 
     def __str__(self):
-        return self.piece.letter if self.piece else "."
+        return self.piece.letter if self.piece else ""
 
 
 class Board:
@@ -69,7 +69,21 @@ class Board:
         self.board = self.__create_board(size_x, size_y)
         self.players = []
         self.npcs = []  # non playable characters
-        self.turn = 0
+        self.__turn = 0
+
+    @property
+    def turn(self):
+        return self.__turn
+
+    @turn.setter
+    def turn(self, new_turn):
+        if new_turn <= turn:
+            raise TurnCanOnlyBeIncreased(self.turn, new_turn)
+        turns_passed = new_turn - self.__turn  # in most cases this should be 1
+        for _ in range(turns_passed):
+            for character in (self.npcs + self.players):
+                character.do_passive_action()
+        self.__turn = new_turn
 
     def __create_board(self, size_x, size_y):
         """Return a board as described in the docstring of the class."""
@@ -123,6 +137,10 @@ class Board:
 
         This is THE ONLY PLACE where we create the bidirectional relationship
         between a tile and a piece.
+
+        @args:
+        piece (Piece): the piece which shall be put into the board
+        position (Position): the position at which the piece will be inserted
         """
         try:
             self.__try_moving_there(position)
@@ -140,6 +158,12 @@ class Board:
         """Removes an object from the map given its position.
         Of course, we cannot remove nothingness from the map.
         Returns the (x,y) coordinates where the piece was located.
+
+        @args:
+        piece (Piece): the piece which will be removed
+
+        @return:
+        (int, int): the cordinates from where the piece was removed
         """
 
         if piece.home_board is not self:
@@ -154,6 +178,12 @@ class Board:
         """Return a dictionary of the form {DIRECTION: TILE or None}.
         None will be the value only if the direction is outside of the map for
         the requested center tile.
+
+        @args:
+        tile (Tile): the 'center' tile, which surroundings we're looking for
+
+        @return:
+        {Direction: Tile | None}: surroundings of the tile given as parameter
         """
 
         position = tile.position
@@ -174,16 +204,37 @@ class Board:
         return adjacent
 
     def column_on_position(self, x):
+        """Yields the tiles on column in position x.
+
+        @args:
+        x (int): the column which tiles we want to get
+
+        @return:
+        {Generator} of the tiles in column x.
+        """
         for y in range(self.size_y):
             yield self.board[x][y]
 
     def row_on_postition(self, y):
+        """Yields the tiles on row in position y.
+
+        @args:
+        y (int): the row which tiles we want to get
+
+        @return:
+        {Generator} of the tiles in row y.
+        """
         for x in range(self.size_x):
             yield self.board[x][y]
 
     def _is_valid_position(self, position):
-        """Returns True if the position is found inside the map,
-        False if not."""
+        """
+        @args:
+        position (Position): the position which we are interested in
+
+        @return
+        boolean, True if position inside the map, False if not
+        """
         try:
             self.__check_position_inside_map(position)
             valid_position = True
@@ -193,7 +244,14 @@ class Board:
 
     def __try_moving_there(self, position):
         """Raises either a OutOfBoardError or a PositionOccupiedError
-        if the position given is out of the board or occupied."""
+        if the position given is out of the board or occupied.
+
+        @args:
+        position (Position): the position which we are insterested in
+
+        @return:
+        None
+        """
         conditions = (self.__check_position_inside_map,
                       self.__check_position_occupied)
 
@@ -205,9 +263,9 @@ class Board:
 
     def __check_position_inside_map(self, position):
         """Return True if a given position is found within the limits
-        of the board.  """
+        of the board."""
         x_pos, y_pos = abs(position.x), abs(position.y)
-        if len(self.board) <= y_pos or len(self.board[y_pos]) <= x_pos:
+        if self.size_y <= y_pos or self.size_x <= x_pos:
             raise OutOfBoardError(self, position)
 
     def __check_position_occupied(self, position):

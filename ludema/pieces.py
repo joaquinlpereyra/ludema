@@ -1,7 +1,8 @@
 from ludema.exceptions import (PieceDoesNotHaveItemError, PieceIsNotOnATileError,
                              PieceIsNotOnThisBoardError, OutOfBoardError,
-                             PositionOccupiedError)
+                             PositionOccupiedError, NoItemToGrab)
 from ludema.utils import Direction
+import random
 
 
 class Piece:
@@ -89,7 +90,7 @@ class MovablePiece(Piece):
                 functions which as a side effect move the piece.
             """
             self.possible_movements = []
-            if movement_functions is None:
+            if movement_functions is None or movement_functions == []:
                 self.__default_movements(piece)
             else:
                 self.__set_movements(movement_functions)
@@ -100,6 +101,9 @@ class MovablePiece(Piece):
 
             @args:
             piece (MovablePiece): the MovablePiece to be moved
+
+            @return:
+            None
             """
             def up(): return piece.move_to_tile(piece.surroundings[Direction.UP])
             def right(): return piece.move_to_tile(piece.surroundings[Direction.RIGHT])
@@ -114,17 +118,48 @@ class MovablePiece(Piece):
             @args:
             movement_functions ([nullary functions]): a list of valid
                 functions which as a side effect move the piece.
+
+            @return:
+            None
             """
             for movement_function in movement_functions:
                 self.possible_movements.append(movement_function)
                 setattr(self, movement_function.__name__, movement_function)
+
+        def random(self):
+            """Call and return a random function from the possible movements
+            list. Keep in mind that the movement may or may not be effective,
+            depending on the current position of the piece and where
+            the movement tries to send the piece. For a random valid movent,
+            call the random_and_valid method.
+            """
+            surprise_move = random.choice(self.possible_movements)
+            was_movement_valid = surprise_move()
+            return was_movement_valid
+
+        def random_and_valid(self):
+            """Call and return a random function from the possible movements,
+            making sure that the movement is actually possible for the piece.
+            If the Piece can't move anywhere, it will return False. Otherwise,
+            return True.
+            """
+            tries = 0
+            random_movement_made = self.random()
+            while not random_movement_made:
+                random_movement_made = self.random()
+                tries += 1
+                if tries >= len(self.possible_movements):
+                    return False
+            return True
+
+
 
     def __init__(self, letter, name, movements=None, walkable=False):
         """Create a MovablePiece. A MovablePiece is a Piece which exposes
         the 'Movement' interface, dictated by the movements paramether.
 
         The interface notation is: my_piece.move.my_movement_functions_name()
-        For example: Jonh.move.up() will move Jonh up a tile.
+        For example: John.move.up() will move John up a tile.
 
         move.up(), move.down(), move.right() and move.left() are the movements
         by default provided if you don't specify any movement functions of your
@@ -203,6 +238,34 @@ class MovablePiece(Piece):
         else:
             return False
 
+class Item(Piece):
+    def __init__(self, name, letter, owner=None):
+        Piece.__init__(self, name, letter)
+        self.owner = owner
+
+    @property
+    def has_owner(self):
+        return False if self.owner is None else True
+
+    def do_action(self):
+        raise NotImplementedError("Every item should have its own do_action method!")
+
+class ShortRangeItem(Item):
+    def __init__(self, name, letter, owner=None):
+        Item.__init__(self, name, letter, owner)
+
+    @property
+    def range(self):
+        def only_valid_from(s): return list(filter(lambda t: t is not None, s))
+
+        if self.owner:
+            return only_valid_from(self.owner.surroundings.values())
+        else:
+            return only_valid_from(self.surroundings.values()) if self.home_tile else None
+
+    def do_action(self):
+        raise NotImplementedError("Every item should have its own do_action method!")
+
 
 class Wall(Piece):
     def __init__(self, letter="."):
@@ -214,7 +277,7 @@ class Character(MovablePiece):
     Should not be used directly.
     """
     def __init__(self, letter, name, movements=None, attack_damage=None,
-                 items=None, health=10, turn_passing_actions=None):
+                 items=None, health=10):
         MovablePiece.__init__(self, letter, name, movements)
         self.letter = letter
         self.name = name
@@ -262,10 +325,11 @@ class Character(MovablePiece):
             return False, None
 
     def _unsafe_grab_item(self, tile_where_item_is):
-        if not isinstance(tile_where_item_is.piece, Piece):
-            raise NoItemToGrab
+        if not isinstance(tile_where_item_is.piece, Item):
+            raise NoItemToGrab(self)
 
         self.items.append(tile_where_item_is.piece)
+        tile_where_item_is.piece.owner = self
         tile_where_item_is.piece = None
 
     def grab_item(self, tile_where_item_is):
@@ -276,8 +340,8 @@ class Character(MovablePiece):
             return False
 
     def grab_item_from_surroundings(self):
-        for tile in filter(lambda i: i is not None, self.surroundings):
-            item_grabbed = grab_item(tile)
+        for tile in filter(lambda i: i is not None, self.surroundings.values()):
+            item_grabbed = self.grab_item(tile)
             if item_grabbed:
                 return True
         else:
@@ -285,21 +349,30 @@ class Character(MovablePiece):
 
 
 class Player(Character):
-    """The Player character."""
-    def __init__(self, letter, name, items=[], health=10):
-        Character.__init__(self, letter, name, items, health=10)
-        self.turn_passing_actions = ['use_item', 'gram_item', 'move_to_tile']
+    """The Player character. The most important characteristic of the Player
+    is that some of its methods, when called, will make the board in which
+    this """
+    def __init__(self, letter, name, movements=None,
+                 attack_damage=1, items=None, health=10):
+        Character.__init__(self, letter, name, movements, attack_damage,
+                           items, health)
+        self.turn_passing_actions = ['use_item', 'grab_item', 'move_to_tile']
 
     def __getattribute__(self, name):
         if name in object.__getattribute__(self, 'turn_passing_actions'):
             home_tile = object.__getattribute__(self, 'home_tile')
-            home_tile.board.turn += 1
+            if home_tile is not None:
+                home_tile.board.turn += 1
+            else:
+                raise PieceIsNotOnATileError(self)
         return object.__getattribute__(self, name)
 
 
 class NPC(Character):
-    def __init__(self, letter, name, items=[], health=10):
-        Character.__init__(self, letter, name, items)
+    def __init__(self, letter, name, movements=None, attack_damage=None,
+                 items=None, health=10):
+        Character.__init__(self, letter, name, movements, attack_damage,
+                           items, health)
 
     def do_passive_action(self):
         pass

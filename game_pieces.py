@@ -1,5 +1,4 @@
-from ludema.pieces import Piece, Character
-from ludema.items import Item, ShortRangeItem
+from ludema.pieces import Piece, Character, NPC, Item, ShortRangeItem
 import ludema.exceptions
 
 class Door(Piece):
@@ -26,10 +25,17 @@ class Key(ShortRangeItem):
         return self.open_door()
 
     def open_door(self):
-        range_tiles = self.range.values()
-        surrounding_pieces = [tile.piece for tile in range_tiles if tile]
+        surrounding_pieces = [tile.piece for tile in self.range if tile]
         for piece in surrounding_pieces:
             if piece is self.target_door:
                 self.target_door.is_open = True
-                print("DOOR OPEN")
-                break
+                return True
+        else:
+            return False
+
+class Enemy(NPC):
+    def __init__(self, letter, name):
+        NPC.__init__(self, letter, name)
+
+    def do_passive_action(self):
+        self.move.random_and_valid()
