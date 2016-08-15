@@ -25,6 +25,15 @@ class TurnCanOnlyBeIncreased(_GameError):
                         self.prev_turn))
         return error_string
 
+class TurnsAreOver(_GameError):
+    def __init__(self, board):
+        _GameError.__init__(self)
+        self.board = board
+
+    def __str__(self):
+        error_string = ("Turns are over on board {0}".format(self.board.name))
+        return error_string
+
 class TileIsEmptyError(_GameError):
     def __init__(self, character, tile):
         _GameError.__init__(self)

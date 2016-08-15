@@ -1,7 +1,8 @@
 from ludema import pieces
 from ludema.utils import Position, Direction
 from ludema.exceptions import (PieceIsNotOnThisBoardError, OutOfBoardError,
-                             PositionOccupiedError)
+                               PositionOccupiedError, TurnCanOnlyBeIncreased,
+                               TurnsAreOver)
 
 """
 The purpose of this module is to define a board where the pieces can move.
@@ -69,6 +70,7 @@ class Board:
         self.board = self.__create_board(size_x, size_y)
         self.players = []
         self.npcs = []  # non playable characters
+        self.turn_limit = turn_limit
         self.__turn = 0
 
     @property
@@ -77,13 +79,15 @@ class Board:
 
     @turn.setter
     def turn(self, new_turn):
-        if new_turn <= turn:
+        if new_turn <= self.turn:
             raise TurnCanOnlyBeIncreased(self.turn, new_turn)
         turns_passed = new_turn - self.__turn  # in most cases this should be 1
         for _ in range(turns_passed):
             for character in (self.npcs + self.players):
                 character.do_passive_action()
         self.__turn = new_turn
+        if self.turn_limit > 0 and self.__turn > self.turn_limit:
+            raise TurnsAreOver(self)
 
     def __create_board(self, size_x, size_y):
         """Return a board as described in the docstring of the class."""

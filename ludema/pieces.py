@@ -347,6 +347,12 @@ class Character(MovablePiece):
         else:
             return False
 
+    def do_passive_action(self):
+        pass
+
+    def do_active_action(self):
+        pass
+
 
 class Player(Character):
     """The Player character. The most important characteristic of the Player
@@ -374,8 +380,3 @@ class NPC(Character):
         Character.__init__(self, letter, name, movements, attack_damage,
                            items, health)
 
-    def do_passive_action(self):
-        pass
-
-    def do_active_action(self):
-        pass
