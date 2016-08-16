@@ -1,6 +1,6 @@
 from ludema.screen import Screen
 from ludema.board import Board
-from ludema.utils import Position, Direction
+from ludema.abstract.utils import Position, Direction
 from ludema.pieces import Character, Player
 from pieces_example import Door, Key, Enemy
 import colorama

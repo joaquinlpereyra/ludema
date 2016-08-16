@@ -1,5 +1,5 @@
 from ludema import pieces
-from ludema.utils import Position, Direction
+from ludema.abstract.utils import Position, Direction
 from ludema.exceptions import (PieceIsNotOnThisBoardError, OutOfBoardError,
                                PositionOccupiedError, TurnCanOnlyBeIncreased,
                                TurnsAreOver)
