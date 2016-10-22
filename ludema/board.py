@@ -57,13 +57,13 @@ class Board:
 
     This structure was chosen so you could so board[x][y] and get a meaningful
     result.
-
-    Note that the last two arguments of the Tile are actually ony one
-    Postition namedtuple.
     """
-    def __init__(self, name, size_x, size_y, empty_repr=" ", turn_limit=-1):
+    def __init__(self, name, size_x, size_y, win_conditions, lose_conditions,
+                 empty_repr=" ", turn_limit=-1):
         """Initializes the object with a name and a board."""
         self.name = name
+        self.win_conditions = win_conditions
+        self.lose_conditions = lose_conditions
         self.size_x = size_x
         self.size_y = size_y
         self.empty_repr = empty_repr
@@ -71,22 +71,30 @@ class Board:
         self.players = []
         self.npcs = []  # non playable characters
         self.turn_limit = turn_limit
-        self.__turn = 0
+        self._turn = 0
+
+    @property
+    def won(self):
+        return any([win_condition() for win_condition in self.win_conditions])
+
+    @property
+    def lost(self):
+        return any([lose_condition() for lose_condition in self.lose_conditions])
 
     @property
     def turn(self):
-        return self.__turn
+        return self._turn
 
     @turn.setter
     def turn(self, new_turn):
         if new_turn <= self.turn:
             raise TurnCanOnlyBeIncreased(self.turn, new_turn)
-        turns_passed = new_turn - self.__turn  # in most cases this should be 1
+        turns_passed = new_turn - self._turn  # in most cases this should be 1
         for _ in range(turns_passed):
             for character in (self.npcs + self.players):
                 character.do_passive_action()
-        self.__turn = new_turn
-        if self.turn_limit > 0 and self.__turn > self.turn_limit:
+        self._turn = new_turn
+        if self.turn_limit > 0 and self._turn > self.turn_limit:
             raise TurnsAreOver(self)
 
     def __create_board(self, size_x, size_y):

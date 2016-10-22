@@ -18,6 +18,8 @@ map_.put_piece(key, Position(1, 6))
 map_.put_piece(enemy, Position(1,1))
 map_.put_piece(enemy2, Position(4,4))
 
+map_.win_conditions = {lambda: door.is_open,
+
 def control_bruma():
     def grab_item():
         bruma.grab_item_from_surroundings()
@@ -51,12 +53,16 @@ def control_bruma():
         raise
 
 colorama.init()
-def bruma_information(): print("Name: {0} / Position: {1}".format(bruma.name, bruma.position))
-def show_map(): print(str(map_))
+def bruma_information():
+    print("Name: {0}\nHealth: {1}\nPosition: {2}".format(bruma.name, bruma.health, bruma.position))
+def show_map(): print(map_)
 
 screen = Screen(show_map, bruma_information, control_bruma)
 won = False
-while not won:
+lost = False
+while not map_.lost or not map_.won:
     screen.show(clear_after=True)
-
-print("YOU OPENED THE DOOR. YOU WON!!!!")
+if won:
+    print("YOU OPENED THE DOOR. YOU WON!!!!")
+if lost:
+    print("YOU DIED.")

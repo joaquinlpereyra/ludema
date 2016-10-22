@@ -110,7 +110,7 @@ class Character(Piece):
 class Player(Character):
     """The Player character. The most important characteristic of the Player
     is that some of its methods, when called, will make the board in which
-    this """
+    this Player live advance one turn."""
     def __init__(self, letter, name, movements=None,
                  attack_damage=1, items=None, health=10):
         Character.__init__(self, letter, name, movements, attack_damage,
