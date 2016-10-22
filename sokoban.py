@@ -1,18 +1,22 @@
 import colorama
+import sys
 from colorama import Fore, Back, Style
 from ludema.screen import Screen
 from ludema.board import Board
 from ludema.pieces import Wall, Player
+from ludema.user_input import user_input
 from sokoban_pieces import Box, BoxDestination
 
 def control_guy():
-    mappings = {"up": lambda: guy.move.up(),
-                "down": lambda: guy.move.down(),
-                "right": lambda: guy.move.right(),
-                "left": lambda: guy.move.left(),
+    mappings = {"w": lambda: guy.move.up(),
+                "s": lambda: guy.move.down(),
+                "d": lambda: guy.move.right(),
+                "a": lambda: guy.move.left(),
+                "q": lambda: sys.exit(0),
                 }
 
-    action = input(Style.DIM + "What to do now? ")
+    print(Style.DIM + "What to do now? ")
+    action = user_input()
     try:
         mappings[action]()
     except KeyError:
@@ -56,6 +60,7 @@ screen = Screen(lambda: print(board), control_guy)
 while True:
     screen.show(clear_after=True)
     if board.lost or board.won:
+        screen.show(clear_after=True)
         break
 if board.won:
     print("ALL BOXES IN PLACE. YOU WON!!!!")
