@@ -165,6 +165,42 @@ class Board:
         elif isinstance(piece, pieces.Player):
             self.players.append(piece)
 
+    def put_piece_on_column(self, piece_constructor, x, ranges):
+        """Puts pieces returned by piece_constructor on the column
+        of position X.
+
+        If ranges are specified, the whole row will be filled.
+
+        @args:
+        piece_constructor (nullary function): a function that returns the piece
+        x (int): the x position of the column
+        ranges (*tuples): arbitrary amout of ranges to put the piece on the column
+        """
+        if not ranges:
+            ranges = [(0, self.size_y)]
+
+        for begin, end in ranges:
+            for y in range(begin, end):
+                self.put_piece(piece_constructor(), x, y)
+
+    def put_piece_on_row(self, piece_constructor, y, ranges):
+        """Puts pieces returned by piece_constructor on the row
+        of position Y.
+
+        If ranges are specified, the whole row will be filled.
+
+        @args:
+        piece_constructor (nullary function): a function that returns the piece
+        y (int): the y position of the column
+        ranges (*tuples): arbitrary amout of ranges to put the piece on the row
+        """
+        if not ranges:
+            ranges = [(0, self.size_y)]
+
+        for begin, end in ranges:
+            for x in range(begin, end):
+                self.put_piece(piece_constructor(), x, y)
+
     def remove_piece(self, piece):
         """Removes an object from the map given its position.
         Of course, we cannot remove nothingness from the map.
