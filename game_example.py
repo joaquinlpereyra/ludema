@@ -1,24 +1,24 @@
 from ludema.screen import Screen
 from ludema.board import Board
-from ludema.abstract.utils import Position, Direction
 from ludema.pieces import Character, Player
 from pieces_example import Door, Key, Enemy
 import colorama
 from colorama import Fore, Back, Style
 
-map_ = Board("Main", 5, 7, empty_repr=(Style.DIM + " . " + Style.RESET_ALL))
 bruma = Player(Fore.GREEN + "\u03A8", "Bruma")
 door = Door("Door1", letter=Fore.CYAN + 'D')
 key = Key("Key1", door, letter=Fore.YELLOW + "K")
 enemy = Enemy(Fore.RED + "E", "Enemy")
 enemy2 = Enemy(Fore.RED + "B", "Enemy2")
-map_.put_piece(bruma, Position(0, 0))
-map_.put_piece(door, Position(4, 6))
-map_.put_piece(key, Position(1, 6))
-map_.put_piece(enemy, Position(1,1))
-map_.put_piece(enemy2, Position(4,4))
+win_conditions = [lambda: door.is_open]
+lose_conditions = [lambda: False]
+map_ = Board("Main", 5, 7, win_conditions, lose_conditions, empty_repr=(Style.DIM + " . " + Style.RESET_ALL))
 
-map_.win_conditions = {lambda: door.is_open,
+map_.put_piece(bruma, 0, 0)
+map_.put_piece(door, 4, 6)
+map_.put_piece(key, 1, 6)
+map_.put_piece(enemy, 1, 1)
+map_.put_piece(enemy2, 4, 4)
 
 def control_bruma():
     def grab_item():
@@ -50,19 +50,18 @@ def control_bruma():
         mappings[action]()
     except:
         print("ooops...")
-        raise
+        # raise
 
 colorama.init()
 def bruma_information():
     print("Name: {0}\nHealth: {1}\nPosition: {2}".format(bruma.name, bruma.health, bruma.position))
-def show_map(): print(map_)
 
-screen = Screen(show_map, bruma_information, control_bruma)
-won = False
-lost = False
-while not map_.lost or not map_.won:
+screen = Screen(lambda: print(map_), bruma_information, control_bruma)
+while True:
     screen.show(clear_after=True)
-if won:
+    if map_.lost or map_.won:
+        break
+if map_.won:
     print("YOU OPENED THE DOOR. YOU WON!!!!")
-if lost:
+if map_.lost:
     print("YOU DIED.")

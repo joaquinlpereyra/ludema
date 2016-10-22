@@ -8,10 +8,6 @@ from ludema.exceptions import (PieceIsNotOnThisBoardError, OutOfBoardError,
 The purpose of this module is to define a board where the pieces can move.
 The majority of this work is carried of by the Board class, but the
 Tile is also quite important.
-
-The Position named tuple should be self explanatory. It's usage is
-MANDATORY, no reference to the position of something on the map should
-be made in any other way than by using Position.
 """
 
 
@@ -59,7 +55,7 @@ class Board:
     result.
     """
     def __init__(self, name, size_x, size_y, win_conditions, lose_conditions,
-                 empty_repr=" ", turn_limit=-1):
+                 empty_repr="   ", turn_limit=-1):
         """Initializes the object with a name and a board."""
         self.name = name
         self.win_conditions = win_conditions
@@ -143,7 +139,7 @@ class Board:
         return (str(self.board) + '\n ' +
                 ' Board Name: ' + self.name + '|' + super().__repr__())
 
-    def put_piece(self, piece, position):
+    def put_piece(self, piece, x, y):
         """Puts a piece on the board. Raises either OutOfBoardError or
         PossitionOccupiedError if that wasn't possible.
 
@@ -152,8 +148,11 @@ class Board:
 
         @args:
         piece (Piece): the piece which shall be put into the board
-        position (Position): the position at which the piece will be inserted
+        x (int): The x coordinate where to put the piece.
+        y (int): the y coordinate where to put the piece.
         """
+        position = Position(x, y)
+
         try:
             self.__try_moving_there(position)
         except (OutOfBoardError, PositionOccupiedError) as e:
@@ -286,4 +285,4 @@ class Board:
         """
         tile = self.board[position.x][position.y]
         if tile.piece is not None and not tile.piece.walkable:
-            raise PositionOccupiedError(self, position)
+            raise PositionOccupiedError(tile)

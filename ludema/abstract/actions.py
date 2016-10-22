@@ -11,6 +11,13 @@ class Action:
         if action_functions is None:
             action_functions = self._default_actions()
         self._set_actions(action_functions)
+        self.history = []
+
+    def __getattribute__(self, name):
+        attr = object.__getattribute__(self, name)
+        if attr in object.__getattribute__(self, 'possible_actions'):
+            self.history.append(name)
+        return object.__getattribute__(self, name)
 
     @property
     def is_implemented(self):
@@ -199,7 +206,10 @@ class Moving(Action):
 
         if tile.piece is not None:
             tile.piece.on_touch_do(touching_piece=self.piece)
-            if not tile.piece.walkable:
+            # what if tile.piece.on_touch_do actually moved the touched piece?
+            # it could have, so we need to check if tile.piece still has
+            # a piece...
+            if tile.piece and not tile.piece.walkable:
                 return False
 
         self.piece.home_tile.piece = None

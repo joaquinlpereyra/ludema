@@ -113,4 +113,3 @@ class PositionOccupiedError(_GameError):
                         .format(self.tile.position.x, self.tile.position.y,
                         self.tile.board.name))
         return error_string
-

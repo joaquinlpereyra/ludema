@@ -1,4 +1,6 @@
+from colorama import Style
 from ludema.abstract.actions import Moving, Attacking
+from ludema.exceptions import PieceIsNotOnATileError
 
 class Piece:
     """Defines a Piece, which is _anything_ that can
@@ -68,7 +70,7 @@ class Piece:
         grass_piece.move.up()  # error: method doesn't exist
         """
         self.name = name
-        self.letter = "{0}".format(letter)
+        self.letter = "{0}{1}".format(letter, Style.RESET_ALL)
         self.walkable = walkable
         self.__home_tile = None
         self.turn_increasing_actions = turn_increasing_actions or ['Moving',
