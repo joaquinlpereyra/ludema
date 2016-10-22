@@ -38,4 +38,5 @@ class Enemy(NPC):
         NPC.__init__(self, letter, name)
 
     def do_passive_action(self):
+        self.attack.random_and_valid()
         self.move.random_and_valid()

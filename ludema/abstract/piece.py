@@ -9,7 +9,7 @@ class Piece:
     """
 
     def __init__(self, letter, name=None, walkable=False, movements=None,
-                 attacks=None):
+                 attacks=None, health=-1, turn_increasing_actions=None):
         """Initializes a Piece with a given name, letter and its home tile
         on None. The home tile should only be set by assigning the piece
         to a tile.
@@ -51,6 +51,8 @@ class Piece:
 
             Default attacks: Attacking.up(), Attacking.right(),
                              Attacking.left(), Attacking.down()
+        health (int): Defaults to -1, which means "infinite health".
+                          Pretty straightforward.
 
         @examples:
         first_level = Board(name="First Level", size_x=10, size_y=10)
@@ -69,8 +71,11 @@ class Piece:
         self.letter = "{0}".format(letter)
         self.walkable = walkable
         self.__home_tile = None
+        self.turn_increasing_actions = turn_increasing_actions or ['Moving',
+                                                                   'Attacking']
+        self.health = health
         self.move = Moving(self, movements)
-        #self.attack = Attacking(attacks)
+        self.attack = Attacking(self, attacks)
 
     @property
     def home_tile(self):
@@ -111,4 +116,4 @@ class Piece:
         @args:
         touching_piece (Piece): the piece that touches this one
         """
-        raise NotImplementedError("Piece should'n be used directly!")
+        pass

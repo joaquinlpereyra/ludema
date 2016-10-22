@@ -35,15 +35,17 @@ class TurnsAreOver(_GameError):
         return error_string
 
 class TileIsEmptyError(_GameError):
-    def __init__(self, character, tile):
+    def __init__(self, character, tile, error_string=None):
         _GameError.__init__(self)
         self.character = character
         self.tile = tile
+        self.error_string = error_string
 
     def __str__(self):
-        error_string = ("The Character {0} tried to attack tile {1}, but "
-                        "that tile does not have a character."
-                        .format(self.character, self.tile))
+        if not self.error_string:
+            self.error_string = ("The Character {0} tried to attack tile {1}, "
+                                 "but that tile does not have a character."
+                                 .format(self.character, self.tile))
         return error_string
 
 class NoItemToGrab(_GameError):

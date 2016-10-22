@@ -34,14 +34,14 @@ def control_bruma():
     def debug():
         import ipdb; ipdb.set_trace()
 
-    mappings = {"up": bruma.move.up,
-                "down": bruma.move.down,
-                "right": bruma.move.right,
-                "left": bruma.move.left,
-                "grab": grab_item,
-                "use": use_key,
-                "show map": show_map,
-                "debug": debug}
+    mappings = {"up": lambda: bruma.move.up(),
+                "down": lambda: bruma.move.down(),
+                "right": lambda: bruma.move.right(),
+                "left": lambda: bruma.move.left(),
+                "grab": lambda: grab_item(),
+                "use": lambda: use_key(),
+                "show map": lambda: show_map(),
+                "debug": lambda: debug()}
 
     action = input("What to do now? ")
     try:

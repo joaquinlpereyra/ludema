@@ -58,22 +58,6 @@ class Character(Piece):
     def is_dead(self):
         return False if self.health else True
 
-    def _unsafe_attack(self, attack_tile):
-        if not self.attack_damage:
-            raise CharacterCantAttackError(self)
-        if not isinstance(attack_tile.piece, Character):
-            raise TileDoesntHaveACharacterError(self, attack_tile)
-
-        attacked_character = attack_tile.piece
-        attacked_character.health -= self.attack_damage
-
-    def attack(self, attack_tile):
-        try:
-            self._unsafe_attack(attack_tile)
-            return True
-        except (CharacterCantAttackError, TileDoesntHaveACharacterError):
-            return False
-
     def _unsafe_use_item(self, item):
         """Uses item _item_ on the home_map of the character. Returns
         the action specified by the item."""
@@ -131,10 +115,11 @@ class Player(Character):
                  attack_damage=1, items=None, health=10):
         Character.__init__(self, letter, name, movements, attack_damage,
                            items, health)
-        self.turn_passing_actions = ['use_item', 'grab_item', 'move_to_tile']
+        self.turn_passing_actions = ['use_item', 'grab_item', 'move']
 
     def __getattribute__(self, name):
         if name in object.__getattribute__(self, 'turn_passing_actions'):
+            passing_action = object.__getattribute__(self, 'name')
             home_tile = object.__getattribute__(self, 'home_tile')
             if home_tile is not None:
                 home_tile.board.turn += 1
@@ -144,7 +129,7 @@ class Player(Character):
 
 
 class NPC(Character):
-    def __init__(self, letter, name, movements=None, attack_damage=None,
+    def __init__(self, letter, name, movements=None, attack_damage=1,
                  items=None, health=10):
         Character.__init__(self, letter, name, movements, attack_damage,
                            items, health)
