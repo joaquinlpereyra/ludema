@@ -70,10 +70,10 @@ class BoxDestination(Piece):
 # before creating a board, we need to specify winning and losing conditions
 # winning and losing conditions are lists of nullary functions
 win_conditions = [lambda: all([box.in_position for box in boxes])]
-lose_conditions = [lambda: False]
+lose_conditions = [lambda: False]  # never lose :)
 
 # create the actual board named First of 8x8 tiles with the specified conditions
-board = Board("First", 8, 8, win_conditions, lose_conditions)
+# board = Board("First", 8, 8, win_conditions, lose_conditions)
 
 # lets create 4 boxes and boxes destinations
 boxes_dest = [BoxDestination() for _ in range(4)]
@@ -83,37 +83,35 @@ boxes = [Box(boxes_dest) for _ in range(4)]
 # the Wall class is already provided by ludema :)
 def wall(): return Wall(letter = Style.DIM + ".")
 
-# now we just put our walls onto the the map...
-board.put_piece_on_row(wall, y=0, ranges=[(3, 6)])
-board.put_piece_on_row(wall, 2, [(1, 3)])
-board.put_piece_on_row(wall, 3, [(5, 7)])
-board.put_piece_on_row(wall, 4, [(1, 2)])
-board.put_piece_on_row(wall, 5, [(5, 8)])
-board.put_piece_on_row(wall, 7, [(2, 5)])
-board.put_piece_on_column(wall, x=0, ranges=[(2, 5)])
-board.put_piece_on_column(wall, 2, [(4, 7)])
-board.put_piece_on_column(wall, 3, [(1, 3)])
-board.put_piece_on_column(wall, 4, [(5, 7)])
-board.put_piece_on_column(wall, 5, [(1, 3)])
-board.put_piece_on_column(wall, 7, [(3, 5)])
+# lets create our first level
+# this is the blueprint for level 1
+level1 = """
+. . . . . . . .
+. . * * * . . .
+. . * O * * * *
+. . * X . X O *
+* * * . @ . . *
+* O X . X . * *
+* * * * O * * .
+. . . * * * . .
+"""
 
-# we put our guy, our boxes and our boxes destination on specific positions
-board.put_piece(guy, 4, 3)
-board.put_piece(boxes[0], 4, 2)
-board.put_piece(boxes_dest[0], 4, 1)
-board.put_piece(boxes[1], 3, 3)
-board.put_piece(boxes_dest[1], 1, 3)
-board.put_piece(boxes[2], 3, 4)
-board.put_piece(boxes_dest[2], 3, 5)
-board.put_piece(boxes[3], 5, 4)
-board.put_piece(boxes_dest[3], 6, 4)
+# and this the leyend
+leyend = {'*': wall,
+           '@': guy,
+           'X': boxes,
+           'O': boxes_dest
+           }
+
+#ludema takes care of everything else
+board = Board.new_from_blueprint("First", level1, leyend, win_conditions, lose_conditions)
 
 # this is just a continous loop to play the level
 # it will probably be abstracted away in future versions of ludema
 colorama.init(autoreset=True)
 screen = Screen(lambda: print(board), control_guy)
 while True:
-    screen.show(clear_after=False)
+    screen.show(clear_after=True)
     if board.lost or board.won:
         screen.show(clear_after=True)
         break

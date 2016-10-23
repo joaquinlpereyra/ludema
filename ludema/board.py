@@ -1,8 +1,11 @@
 from ludema import pieces
+from ludema import utils
 from ludema.abstract.utils import Position, Direction
+from ludema.abstract.piece import Piece
 from ludema.exceptions import (PieceIsNotOnThisBoardError, OutOfBoardError,
                                PositionOccupiedError, TurnCanOnlyBeIncreased,
-                               TurnsAreOver)
+                               TurnsAreOver, WrongSizeOnX, WrongSizeOnY,
+                               RowsOfDifferentSizes)
 
 """
 The purpose of this module is to define a board where the pieces can move.
@@ -63,6 +66,34 @@ class Board:
     This structure was chosen so you could so board[x][y] and get a meaningful
     result.
     """
+    @classmethod
+    def new_from_blueprint(cls, name, blueprint, legend, win_conditions,
+                           lose_conditions, empty_repr = "   ", turn_limit=-1):
+        """An alternative creator for Board, which uses
+        Board.fill_board_with_blueprint inmediatly after creation to create
+        a board according to a blueprint and a legend. Refer to documentation
+        for that method for more information.
+
+        @args:
+        name (str): the name of the board
+        blueprint (str): the blueprint for the board
+        legend ({key: (Piece | [Piece] | (nullary function -> Piece}): legend
+            for the blueprint
+        win_conditions ([nullary functions]): each turn will be evaluated, if
+            ONE returns True, the board is WON
+        lose_condtitions ([nullary functions]): idem win_conditions, but if ONE
+            returns True, the board is considered lost
+        empty_repr (str, ~"   "): what should an empty espace be represented as?
+        turn_limit: (int, ~ -1): if turn limit is passed, raise TurnsAreOver error.
+            any negative number will be interpreted as no turn limit.
+        """
+
+        blueprint = blueprint.replace(" ", "")
+        lines = blueprint.split('\n')[1:-1]
+        board = cls(name, len(lines[0]), len(lines), win_conditions, lose_conditions, empty_repr, turn_limit)
+        board.fill_board_with_blueprint(blueprint, legend)
+        return board
+
     def __init__(self, name, size_x, size_y, win_conditions, lose_conditions,
                  empty_repr="   ", turn_limit=-1):
         """Init the board.
@@ -165,6 +196,59 @@ class Board:
         """
         return (str(self.board) + '\n ' +
                 ' Board Name: ' + self.name + '|' + super().__repr__())
+
+    def fill_board_with_blueprint(self, blueprint, legend):
+        """Take a blueprint and a legend for it and fill the board
+        according to them.
+
+        The blueprint string ignores blank spaces and automatically ignores
+        the first and last lines of the string. That is to allow for this
+        very convenient format:
+
+        blueprint: \"\"\"
+        . . . . . .
+        . * * * * .
+        . * @ . * .
+        . * * * * .
+        . . . . . .
+        \"\"\"
+
+        @args:
+        blueprint (str): a string representing the board, example given above
+        legend ({letter: (Piece | [Piece] | nullary function -> Piece): a dictionary
+            that maps from characters found on the blueprint to which piece
+            should be put in the place specified by the blueprint.
+            if legend[letter] is a list, the last element of the list will be
+            put first (scanning from the top lefmost corner and continuing
+            to the right and then belown).
+            if legend[letter] is a nularry function that returns a Piece,
+            the piece returned by the nulary function will be put in place
+
+        @raise:
+        WrongeSizeOnX, WrongSizeOnY, RowsOfDifferentSizes, ImpossibleToExtractPiece
+        """
+
+        # NOTE: this creates a copy of the lists in the dict, because
+        # extract_pieces_from_possible_containers modfies a potential list
+        # this dictionary holds as a value, leading to some very unfortunate
+        # and hard to trace bugs
+        legend = utils.copy_lists_in_dictionary(legend)
+
+        blueprint = blueprint.replace(" ", "")
+        lines = blueprint.split('\n')[1:-1]
+
+        if len(lines) != self.size_y:
+            raise WrongSizeOnY
+        if len(lines[0]) != self.size_x:
+            raise WrongSizeOnX
+        if not all([len(line) == len(lines[0]) for line in lines]):
+            raise RowsOfDifferentSizes
+
+        for y_position, string in enumerate(reversed(lines)):
+            for x_position, letter in enumerate(string):
+                if letter in legend:
+                    piece = utils.extract_pieces_from_possible_containers(legend[letter])
+                    self.put_piece(piece, x_position, y_position)
 
     def put_piece(self, piece, x, y):
         """Puts a piece on the board. Raises either OutOfBoardError or

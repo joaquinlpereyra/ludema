@@ -67,9 +67,13 @@ class PieceDoesNotHaveItemError(_GameError):
                         .format(self.piece.name, self.item.name))
         return error_string
 
-class PieceIsNotOnATileError(_GameError):
-    def __init__(self, piece):
+class BoardError(_GameError):
+    def __init__(self):
         _GameError.__init__(self)
+
+class PieceIsNotOnATileError(BoardError):
+    def __init__(self, piece):
+        BoardError.__init__(self)
         self.piece = piece
 
     def __str__(self):
@@ -78,9 +82,9 @@ class PieceIsNotOnATileError(_GameError):
                         "before they can perform actions.".format(self.piece.name))
         return error_string
 
-class PieceIsNotOnThisBoardError(_GameError):
+class PieceIsNotOnThisBoardError(BoardError):
     def __init__(self, piece, board):
-        _GameError.__init__(self)
+        BoardError.__init__(self)
         self.board = board
 
     def __str__(self):
@@ -90,9 +94,9 @@ class PieceIsNotOnThisBoardError(_GameError):
                         "there.".format(self.piece.name, self.board.name))
         return error_string
 
-class OutOfBoardError(_GameError):
+class OutOfBoardError(BoardError):
     def __init__(self, board, position):
-        _GameError.__init__(self)
+        BoardError.__init__(self)
         self.board = board
         self.position = position
 
@@ -102,9 +106,9 @@ class OutOfBoardError(_GameError):
                                      self.position.y,
                                      self.board))
 
-class PositionOccupiedError(_GameError):
+class PositionOccupiedError(BoardError):
     def __init__(self, tile):
-        _GameError.__init__(self)
+        BoardError.__init__(self)
         self.tile = tile
 
     def __str__(self):
@@ -113,3 +117,39 @@ class PositionOccupiedError(_GameError):
                         .format(self.tile.position.x, self.tile.position.y,
                         self.tile.board.name))
         return error_string
+
+class BoardConstructionError(BoardError):
+    def __init__(self):
+        BoardError.__init__(self)
+
+class WrongSizeOnY(BoardConstructionError):
+    def __init__(self):
+        BoardConstructionError.__init__(self)
+
+    def __str__(self):
+        return ("The amount of lines on your constructor string does not match "
+                "the height of your board.")
+
+class WrongSizeOnX(BoardConstructionError):
+    def __init__(self):
+        BoardConstructionError.__init__(self)
+
+    def __str__(self):
+        return ("The lentgh of one or more of the lines on your constructor "
+                "string does not match the width of your board.")
+
+class RowsOfDifferentSizes(BoardConstructionError):
+    def __init__(self):
+        BoardConstructionError.__init__(self)
+
+    def __str__(self):
+        return ("The length of the lines on your constructor string "
+                "do not match. The board has to be a rectangle.")
+
+class ImpossibleToExtractPiece(BoardConstructionError):
+    def __init__(self, container):
+        BoardConstructionError.__init__(self)
+        self.container = container
+
+    def __str__(self):
+        return ("I can't sensibly extract a piece from this container: {0}".format(container))

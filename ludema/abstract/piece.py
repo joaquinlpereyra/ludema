@@ -33,7 +33,7 @@ class Piece:
         movements ([nullary functions] | None | []): Defaults to None.
             movements is the parameter which will specify how the interface
             exposing the valid movements for the piece will be created. Give a
-            list of nullary functions to specify youw own movements functions,
+            list of nullary functions to specify your own movements functions,
             None to let the piece have the default movements
             (up, down, right, left a tile) or pass an empty list to explicity
             set NO movement functions for the piece.  Even if you set
