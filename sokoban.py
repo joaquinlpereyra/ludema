@@ -5,7 +5,6 @@ from ludema.screen import Screen
 from ludema.board import Board
 from ludema.pieces import Wall, Player, Piece
 from ludema.user_input import user_input
-from sokoban_pieces import Box, BoxDestination
 
 # We create a player. It will be green, named "Guy" and represented on the board
 # by the Ψ character (Ψ = 03A8 in unicode)
@@ -19,19 +18,11 @@ guy = Player(Fore.GREEN + "\u03A8", "Guy")
 # return: user_input will process the information as soon as a character
 # is inputed by the user.
 def control_guy():
-    # it is very important that the mappings here do not get executed right away
-    # that's because guy.move.X functions makes a turn pass on a board,
-    # so if all of them got executed right away, every time the mappings
-    # dictionary was created (that is, every time this function is called)
-    # 4 turns would pass by on the board.
-    # we use lambdas to avoid accessing a guy.move.X attribute until the time
-    # is right
-    mappings = {"w": lambda: guy.move.up(),
-                "s": lambda: guy.move.down(),
-                "d": lambda: guy.move.right(),
-                "a": lambda: guy.move.left(),
-                "q": lambda: sys.exit(0),
-                }
+    mappings = {"w": guy.move.up,
+                "s": guy.move.down,
+                "d": guy.move.right,
+                "a": guy.move.left,
+                "q": sys.exit}
 
     action = user_input()
     try:
@@ -122,7 +113,7 @@ board.put_piece(boxes_dest[3], 6, 4)
 colorama.init(autoreset=True)
 screen = Screen(lambda: print(board), control_guy)
 while True:
-    screen.show(clear_after=True)
+    screen.show(clear_after=False)
     if board.lost or board.won:
         screen.show(clear_after=True)
         break

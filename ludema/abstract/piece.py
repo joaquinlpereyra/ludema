@@ -73,8 +73,6 @@ class Piece:
         self.letter = "{0}{1}".format(letter, Style.RESET_ALL)
         self.walkable = walkable
         self.__home_tile = None
-        self.turn_increasing_actions = turn_increasing_actions or ['Moving',
-                                                                   'Attacking']
         self.health = health
         self.move = Moving(self, movements)
         self.attack = Attacking(self, attacks)

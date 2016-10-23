@@ -15,22 +15,31 @@ class Tile:
     """A tile is the atomic unit of the Board. Every tile must have a
     board to live in. Every tile must have a position on said board.
     A tile may or may not hold a piece.
-
     """
-    def __init__(self, board, position, piece=None, walkable=True):
+    def __init__(self, board, position, piece=None):
+        """Init a Til.
+
+        @args:
+        board (Board): the board where the tile lives.
+        piece (Piece, ~None): the piece present on this tile
+        """
         self.board = board
         self.position = position
-        self.__piece = piece
+        self._piece_stack = [piece]
 
     @property
     def piece(self):
-        return self.__piece
+        return self._piece_stack[-1]
 
     @piece.setter
     def piece(self, piece):
-        if piece is not None:
+        # if we currently have no piece or it is walkable, just change the topmost
+        if self.piece is None or self.piece.walkable:
+            self._piece_stack.append(piece)
             piece.home_tile = self
-        self.__piece = piece
+        # we interpret the 'None' type as removing a piece from the tile
+        if piece is None:
+            self._piece_stack.pop()
 
     def __repr__(self):
         original = super().__repr__()
@@ -56,7 +65,21 @@ class Board:
     """
     def __init__(self, name, size_x, size_y, win_conditions, lose_conditions,
                  empty_repr="   ", turn_limit=-1):
-        """Initializes the object with a name and a board."""
+        """Init the board.
+
+        @args:
+        name (str): the name of the board
+        size_x (int): the horizontal size of the board
+        size_y (int): the vertical size of the board
+        win_conditions ([nullary functions]): each turn will be evaluated, if
+            ONE returns True, the board is WON
+        lose_condtitions ([nullary functions]): idem win_conditions, but if ONE
+            returns True, the board is considered lost
+        empty_repr (str, ~"   "): what should an empty espace be represented as?
+        turn_limit: (int, ~ -1): if turn limit is passed, raise TurnsAreOver error.
+            any negative number will be interpreted as no turn limit.
+        """
+
         self.name = name
         self.win_conditions = win_conditions
         self.lose_conditions = lose_conditions
@@ -71,10 +94,12 @@ class Board:
 
     @property
     def won(self):
+        """Return True if the board has been won, False otherwise"""
         return any([win_condition() for win_condition in self.win_conditions])
 
     @property
     def lost(self):
+        """Return True if the board is lost, False otherwise"""
         return any([lose_condition() for lose_condition in self.lose_conditions])
 
     @property
@@ -122,6 +147,8 @@ class Board:
                 name_length = len(str(tile))
                 if not str(tile):
                     map_ += self.empty_repr
+                elif name_length == 1:
+                    map_ +=  " {0} ".format(str(tile))
                 elif name_length == 2:
                     map_ += " {0}".format(str(tile))
                 elif name_length == 3:
@@ -143,23 +170,28 @@ class Board:
         """Puts a piece on the board. Raises either OutOfBoardError or
         PossitionOccupiedError if that wasn't possible.
 
-        This is THE ONLY PLACE where we create the bidirectional relationship
-        between a tile and a piece.
-
         @args:
         piece (Piece): the piece which shall be put into the board
         x (int): The x coordinate where to put the piece.
         y (int): the y coordinate where to put the piece.
-        """
-        position = Position(x, y)
 
+        @raise:
+        OutOfBoardError: if (x,y) coordinates are not on board
+        PositionOccupiedError: if position on (x,y) is already occupied and
+            that tile is not walkable
+        """
+
+        position = Position(x, y)
         try:
             self.__try_moving_there(position)
-        except (OutOfBoardError, PositionOccupiedError) as e:
-            raise e
+        except (OutOfBoardError, PositionOccupiedError):
+            raise
 
+        # NOTE: This is THE ONLY PLACE where we create the bidirectional, 1 to 1
+        # relationship between a tile and a piece.
         destinity_tile = self.board[position.x][position.y]
         destinity_tile.piece = piece
+
         if isinstance(piece, pieces.NPC):
             self.npcs.append(piece)
         elif isinstance(piece, pieces.Player):
@@ -203,7 +235,6 @@ class Board:
 
     def remove_piece(self, piece):
         """Removes an object from the map given its position.
-        Of course, we cannot remove nothingness from the map.
         Returns the (x,y) coordinates where the piece was located.
 
         @args:
@@ -211,13 +242,15 @@ class Board:
 
         @return:
         (int, int): the cordinates from where the piece was removed
+
+        @raise:
+        PieceIsNotOnThisBoardError: if the piece.home_board is not this one
         """
 
         if piece.home_board is not self:
             raise PieceIsNotOnThisBoardError(piece=piece, board=self)
 
-        self.pieces.pop(piece)
-        self.__put_nothingness_where_piece_was(piece)
+        self.put_piece(None, piece.position_x, piece.position_y)
 
         return piece.position_x, piece.position_y
 
@@ -296,8 +329,9 @@ class Board:
         @args:
         position (Position): the position which we are insterested in
 
-        @return:
-        None
+        @raise:
+        OutOfBoardError: if the position is outside of this board
+        PositionOccupiedError: if the posision is already occupied
         """
         conditions = (self.__check_position_inside_map,
                       self.__check_position_occupied)
@@ -310,7 +344,14 @@ class Board:
 
     def __check_position_inside_map(self, position):
         """Return True if a given position is found within the limits
-        of the board."""
+        of the board.
+
+        @args:
+        position (Position): the position to check
+
+        @raise:
+        OutOfBoardError: if posisition is out of this board
+        """
         x_pos, y_pos = abs(position.x), abs(position.y)
         if self.size_y <= y_pos or self.size_x <= x_pos:
             raise OutOfBoardError(self, position)
@@ -318,6 +359,12 @@ class Board:
     def __check_position_occupied(self, position):
         """Return True if a given position if already occupied by other
         object.
+
+        @args:
+        position (Position): the position to check
+
+        @raise:
+        PositionOccupiedError: if posisition is already occupied
         """
         tile = self.board[position.x][position.y]
         if tile.piece is not None and not tile.piece.walkable:

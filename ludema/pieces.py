@@ -1,10 +1,12 @@
+import random
+from functools import wraps
 from ludema.exceptions import (PieceDoesNotHaveItemError, PieceIsNotOnATileError,
                                PieceIsNotOnThisBoardError, OutOfBoardError,
                                PositionOccupiedError, NoItemToGrab)
 
 from ludema.abstract.piece import Piece
+from ludema.abstract.actions import Action
 from ludema.abstract.utils import Direction
-import random
 
 
 class Item(Piece):
@@ -117,15 +119,26 @@ class Player(Character):
                            items, health)
         self.turn_passing_actions = ['use_item', 'grab_item', 'move']
 
-    def __getattribute__(self, name):
-        if name in object.__getattribute__(self, 'turn_passing_actions'):
-            passing_action = object.__getattribute__(self, 'name')
+    def __pass_turn(self, func):
+        @wraps(func)
+        def pass_wrapper(*args, **kwargs):
+            res = func(*args, **kwargs)
             home_tile = object.__getattribute__(self, 'home_tile')
             if home_tile is not None:
                 home_tile.board.turn += 1
             else:
                 raise PieceIsNotOnATileError(self)
-        return object.__getattribute__(self, name)
+            return res
+        return pass_wrapper
+
+    def __getattribute__(self, name):
+        attr = object.__getattribute__(self, name)
+        if name in object.__getattribute__(self, 'turn_passing_actions'):
+            if isinstance(attr, Action):
+                attr.do = self.__pass_turn(attr.do)
+            else:
+                attr = self.__pass_turn(attr)
+        return attr
 
 
 class NPC(Character):

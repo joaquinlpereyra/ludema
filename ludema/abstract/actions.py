@@ -1,8 +1,9 @@
+import random
+from functools import wraps
 from ludema.abstract.utils import Direction
 from ludema.exceptions import (PieceIsNotOnATileError,
                                PieceIsNotOnThisBoardError,
                                TileIsEmptyError)
-import random
 
 class Action:
     def __init__(self, piece, action_functions):
@@ -16,16 +17,19 @@ class Action:
     def __getattribute__(self, name):
         attr = object.__getattribute__(self, name)
         if attr in object.__getattribute__(self, 'possible_actions'):
-            self.history.append(name)
-        return object.__getattribute__(self, name)
+            attr = self._history_appender(attr)
+        return attr
 
     @property
     def is_implemented(self):
         return True if self.possible_actions else False
 
-    @property
-    def should_increment_turn(self):
-        return self.__class__.__name__ in self.piece.turn_increasing_actions
+    def _history_appender(self, func):
+        @wraps(func)
+        def history_wrapper(*args, **kwargs):
+            self.history.append(func.__name__)
+            return func(*args, **kwargs)
+        return history_wrapper
 
     def _increment_piece_home_board_turn(self):
         self.piece.home_tile.board.turn += 1
