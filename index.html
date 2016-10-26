@@ -1,25 +1,34 @@
-<!DOCTYPE html>
-<html lang="en-us">
+<!doctype html>
+<html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <title>Ludema by joaquinlpereyra</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
   </head>
   <body>
-    <section class="page-header">
-      <h1 class="project-name">Ludema</h1>
-      <h2 class="project-tagline">An easy-to-use Python 3 library to help you create terminal games!</h2>
-      <a href="https://github.com/joaquinlpereyra/ludema" class="btn">View on GitHub</a>
-      <a href="https://github.com/joaquinlpereyra/ludema/zipball/master" class="btn">Download .zip</a>
-      <a href="https://github.com/joaquinlpereyra/ludema/tarball/master" class="btn">Download .tar.gz</a>
-    </section>
+    <div class="wrapper">
+      <header>
+        <h1>Ludema</h1>
+        <p>An easy-to-use Python 3 library to help you create terminal games!</p>
 
-    <section class="main-content">
-      <h1>
+        <p class="view"><a href="https://github.com/joaquinlpereyra/ludema">View the Project on GitHub <small>joaquinlpereyra/ludema</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/joaquinlpereyra/ludema/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/joaquinlpereyra/ludema/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/joaquinlpereyra/ludema">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
 <a id="what-is-ludema" class="anchor" href="#what-is-ludema" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>What is Ludema?</h1>
 
 <p>Ludema is a library intended to help beginner and intermediate programmers create terminal games. The project was started specifically with beginners in mind: if you have finished the Codecademy Python course, you know enough about Python and programming to use this library. </p>
@@ -48,14 +57,15 @@
 
 <div class="highlight highlight-source-python"><pre><span class="pl-k">import</span> ludema
 
-<span class="pl-c"># create a main character</span>
+<span class="pl-c"># We will our playable character</span>
 guy <span class="pl-k">=</span> ludema.pieces.Player(Fore.<span class="pl-c1">GREEN</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">"</span><span class="pl-cce">\u03A8</span><span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Guy<span class="pl-pds">"</span></span>)
 
-<span class="pl-c"># a function that gives us wall objects</span>
-<span class="pl-k">def</span> <span class="pl-en">new_wall</span>():
+<span class="pl-c"># and also a function that returns walls</span>
+<span class="pl-k">def</span> <span class="pl-en">new_wall</span>(): 
     <span class="pl-k">return</span> ludema.pieces.Wall(<span class="pl-v">letter</span> <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>.<span class="pl-pds">"</span></span>)
 
-<span class="pl-c"># time to create a blueprint for our first board</span>
+<span class="pl-c"># this is how we create a board</span>
+<span class="pl-c"># first, lets define our blueprint</span>
 blueprint <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"""</span></span>
 <span class="pl-s">. . . . . . . . </span>
 <span class="pl-s">. . * * * * * .</span>
@@ -76,10 +86,13 @@ win_conditions <span class="pl-k">=</span> [<span class="pl-k">lambda</span>: <s
 lose_contidition <span class="pl-k">=</span> [<span class="pl-k">lambda</span>: <span class="pl-c1">False</span>]
 
 <span class="pl-c"># and now we can create our map</span>
-<span class="pl-c"># everything that is not on the legend will be interpreted as empty space on the board</span>
-board <span class="pl-k">=</span> Board.new_from_blueprint(<span class="pl-s"><span class="pl-pds">"</span>First<span class="pl-pds">"</span></span>, level1, leyend, win_conditions, lose_conditions)
+<span class="pl-c"># everything that is not on the legend will be</span>
+<span class="pl-c"># interpreted as empty space on the board</span>
+board <span class="pl-k">=</span> Board.new_from_blueprint(<span class="pl-s"><span class="pl-pds">"</span>First<span class="pl-pds">"</span></span>, blueprint, legend,
+                                 win_conditions, lose_conditions)
 
-<span class="pl-c"># lets define a simple function to control our guy over the keyboard</span>
+<span class="pl-c"># only one step missing</span>
+<span class="pl-c"># lets define a simple function to control our guy </span>
 <span class="pl-c"># with WASD keys, like FPS games do</span>
 <span class="pl-k">def</span> <span class="pl-en">control_guy</span>():
     mappings <span class="pl-k">=</span> {<span class="pl-s"><span class="pl-pds">"</span>w<span class="pl-pds">"</span></span>: guy.move.up,
@@ -100,15 +113,13 @@ screen <span class="pl-k">=</span> Screen(<span class="pl-k">lambda</span>: <spa
     screen.show(<span class="pl-v">clear_after</span><span class="pl-k">=</span><span class="pl-c1">True</span>)
     <span class="pl-k">if</span> board.lost <span class="pl-k">or</span> board.won:
         <span class="pl-k">break</span></pre></div>
-
-      <footer class="site-footer">
-        <span class="site-footer-owner"><a href="https://github.com/joaquinlpereyra/ludema">Ludema</a> is maintained by <a href="https://github.com/joaquinlpereyra">joaquinlpereyra</a>.</span>
-
-        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/joaquinlpereyra">joaquinlpereyra</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
       </footer>
-
-    </section>
-
-  
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
   </body>
 </html>
