@@ -138,6 +138,15 @@ class Character(Piece):
             return False, None
 
     def _unsafe_grab_item(self, tile_where_item_is):
+        """Grabs the item from tile_where_item_is. Will throw an exception
+        if the Piece on tile_where_item_is is not an Item.
+
+        @args:
+        tile_where_item_is (Tile): the tile where the item should be located
+
+        @raise:
+        NoItemToGrab
+        """
         if not isinstance(tile_where_item_is.piece, Item):
             raise NoItemToGrab(self)
 
@@ -146,6 +155,15 @@ class Character(Piece):
         tile_where_item_is.piece = None
 
     def grab_item(self, tile_where_item_is):
+        """Grabs an item from tile_where item is.
+
+        @args:
+        tile_where_item_is (Tile): the tile where the item should be located
+
+        @return:
+        True if item could be grabbed (an item was found on tile_where_item_is)
+        or False if it wasn't found there
+        """
         try:
             self._unsafe_grab_item(tile_where_item_is)
             return True
@@ -153,7 +171,14 @@ class Character(Piece):
             return False
 
     def grab_item_from_surroundings(self):
-        for tile in filter(lambda i: i is not None, self.surroundings.values()):
+        """Grabs an item from the surroundings of the Character.
+        Stops at first item grabbed.
+        Items look-up goes clockwise.
+
+        @return:
+        True if item found and grabbed, False otherwise.
+        """
+        for tile in self.surroundings.values():
             item_grabbed = self.grab_item(tile)
             if item_grabbed:
                 return True
@@ -171,13 +196,32 @@ class Player(Character):
     """The Player character. The most important characteristic of the Player
     is that some of its methods, when called, will make the board in which
     this Player live advance one turn."""
-    def __init__(self, letter, name, movements=None,
-                 attack_damage=1, items=None, health=10):
+    def __init__(self, letter, name, movements=None, attack_damage=1, items=None,
+                 health=10, turn_passing_actions=None):
+        """Create a Player.
+
+        @args:
+        movements ([nullary functions] | [] | ~None): leave None
+            so the Character will have the defaults movements (up, down, left, right).
+            Pass a list of nullary functions to specify your own movement functions.
+            Pass an empty list to explictly set no movements for this Character.
+        attack_damage (int, ~1): how much damage should this piece do when attacking
+        items ([Items] | ~None): the Items this piece should start with.
+            if None, items will be an empty list.
+        health (int, ~10): how much health should this character have.
+        turn_passing_actions ([str]): all the elements of the list should be
+            either method names or actions names. when in this list,
+            using one of these methods or using the Action.do method will
+            pass a turn on the character's board.
+        """
         Character.__init__(self, letter, name, movements, attack_damage,
                            items, health)
         self.turn_passing_actions = ['use_item', 'grab_item', 'move']
 
     def __pass_turn(self, func):
+        """A decorator which makes a function pass a turn on the character's
+        home board.
+        """
         @wraps(func)
         def pass_wrapper(*args, **kwargs):
             res = func(*args, **kwargs)
@@ -190,6 +234,9 @@ class Player(Character):
         return pass_wrapper
 
     def __getattribute__(self, name):
+        """Overriden __getattribute__ so that it applies the __pass_turn
+        decorator to the methods or actions on self.turn_passing_actions.
+        """
         attr = object.__getattribute__(self, name)
         if name in object.__getattribute__(self, 'turn_passing_actions'):
             if isinstance(attr, Action):
