@@ -1,0 +1,544 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>ludema.board &#8212; Ludema 1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="Ludema 1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for ludema.board</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">ludema</span> <span class="k">import</span> <span class="n">pieces</span>
+<span class="kn">from</span> <span class="nn">ludema</span> <span class="k">import</span> <span class="n">utils</span>
+<span class="kn">from</span> <span class="nn">ludema.abstract.utils</span> <span class="k">import</span> <span class="n">Position</span><span class="p">,</span> <span class="n">Direction</span>
+<span class="kn">from</span> <span class="nn">ludema.abstract.piece</span> <span class="k">import</span> <span class="n">Piece</span>
+<span class="kn">from</span> <span class="nn">ludema.exceptions</span> <span class="k">import</span> <span class="p">(</span><span class="n">PieceIsNotOnThisBoardError</span><span class="p">,</span> <span class="n">OutOfBoardError</span><span class="p">,</span>
+                               <span class="n">PositionOccupiedError</span><span class="p">,</span> <span class="n">TurnCanOnlyBeIncreased</span><span class="p">,</span>
+                               <span class="n">TurnsAreOver</span><span class="p">,</span> <span class="n">WrongSizeOnX</span><span class="p">,</span> <span class="n">WrongSizeOnY</span><span class="p">,</span>
+                               <span class="n">RowsOfDifferentSizes</span><span class="p">)</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">The purpose of this module is to define a board where the pieces can move.</span>
+<span class="sd">The majority of this work is carried of by the Board class, but the</span>
+<span class="sd">Tile is also quite important.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="Tile"><a class="viewcode-back" href="../../ludema.html#ludema.board.Tile">[docs]</a><span class="k">class</span> <span class="nc">Tile</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;A tile is the atomic unit of the Board. Every tile must have a</span>
+<span class="sd">    board to live in. Every tile must have a position on said board.</span>
+<span class="sd">    A tile may or may not hold a piece.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">board</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">piece</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Init a Til.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            board (Board): the board where the tile lives.</span>
+<span class="sd">            position (Position): the position of this tile.</span>
+<span class="sd">            piece (Piece or None): the piece present on this tile. Deafults to None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">board</span> <span class="o">=</span> <span class="n">board</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">=</span> <span class="n">position</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_piece_stack</span> <span class="o">=</span> <span class="p">[</span><span class="n">piece</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">piece</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_piece_stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="nd">@piece</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">piece</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piece</span><span class="p">):</span>
+        <span class="c1"># if we currently have no piece or it is walkable, just change the topmost</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">piece</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">walkable</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_piece_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">piece</span><span class="p">)</span>
+            <span class="n">piece</span><span class="o">.</span><span class="n">home_tile</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="c1"># we interpret the &#39;None&#39; type as removing a piece from the tile</span>
+        <span class="k">if</span> <span class="n">piece</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_piece_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">original</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__repr__</span><span class="p">()</span>
+        <span class="n">custom</span> <span class="o">=</span> <span class="s2">&quot; at </span><span class="si">{0}</span><span class="s2"> on map </span><span class="si">{1}</span><span class="s2"> holding </span><span class="si">{2}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+                                                         <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                                         <span class="bp">self</span><span class="o">.</span><span class="n">piece</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">original</span> <span class="o">+</span> <span class="n">custom</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">letter</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">piece</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="Board"><a class="viewcode-back" href="../../ludema.html#ludema.board.Board">[docs]</a><span class="k">class</span> <span class="nc">Board</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Defines a simple square board where Pieces can move.</span>
+<span class="sd">    The board&#39;s main attribute is the board itself, which is a matrix of the</span>
+<span class="sd">    form (for a 2x3 board):</span>
+<span class="sd">    board = [[Tile(self, Position(0, 0)], Tile(self, Position(0, 1))]</span>
+<span class="sd">             [Tile(self, Position(1, 0))], Tile(self, Position(1, 1))],</span>
+<span class="sd">             [Tile(self, Position(2, 0))], Tile(self, Position(2, 1))]</span>
+
+<span class="sd">    This structure was chosen so you could so board[x][y] and get a meaningful</span>
+<span class="sd">    result.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Board.new_from_blueprint"><a class="viewcode-back" href="../../ludema.html#ludema.board.Board.new_from_blueprint">[docs]</a>    <span class="k">def</span> <span class="nf">new_from_blueprint</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">blueprint</span><span class="p">,</span> <span class="n">legend</span><span class="p">,</span> <span class="n">win_conditions</span><span class="p">,</span>
+                           <span class="n">lose_conditions</span><span class="p">,</span> <span class="n">empty_repr</span> <span class="o">=</span> <span class="s2">&quot;   &quot;</span><span class="p">,</span> <span class="n">turn_limit</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;An alternative creator for Board, which uses</span>
+<span class="sd">        Board.fill_board_with_blueprint inmediatly after creation to create</span>
+<span class="sd">        a board according to a blueprint and a legend. Refer to documentation</span>
+<span class="sd">        for that method for more information.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        name (str): the name of the board</span>
+<span class="sd">        blueprint (str): the blueprint for the board</span>
+<span class="sd">        legend ({key: (Piece | [Piece] | (nullary function -&gt; Piece}): legend</span>
+<span class="sd">            for the blueprint</span>
+<span class="sd">        win_conditions ([nullary functions]): each turn will be evaluated, if</span>
+<span class="sd">            ONE returns True, the board is WON</span>
+<span class="sd">        lose_condtitions ([nullary functions]): idem win_conditions, but if ONE</span>
+<span class="sd">            returns True, the board is considered lost</span>
+<span class="sd">        empty_repr (str, ~&quot;   &quot;): what should an empty espace be represented as?</span>
+<span class="sd">        turn_limit: (int, ~ -1): if turn limit is passed, raise TurnsAreOver error.</span>
+<span class="sd">            any negative number will be interpreted as no turn limit.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">blueprint</span> <span class="o">=</span> <span class="n">blueprint</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">blueprint</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">board</span> <span class="o">=</span> <span class="n">cls</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">),</span> <span class="n">win_conditions</span><span class="p">,</span> <span class="n">lose_conditions</span><span class="p">,</span> <span class="n">empty_repr</span><span class="p">,</span> <span class="n">turn_limit</span><span class="p">)</span>
+        <span class="n">board</span><span class="o">.</span><span class="n">fill_board_with_blueprint</span><span class="p">(</span><span class="n">blueprint</span><span class="p">,</span> <span class="n">legend</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">board</span></div>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">size_x</span><span class="p">,</span> <span class="n">size_y</span><span class="p">,</span> <span class="n">win_conditions</span><span class="p">,</span> <span class="n">lose_conditions</span><span class="p">,</span>
+                 <span class="n">empty_repr</span><span class="o">=</span><span class="s2">&quot;   &quot;</span><span class="p">,</span> <span class="n">turn_limit</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Init the board.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        name (str): the name of the board</span>
+<span class="sd">        size_x (int): the horizontal size of the board</span>
+<span class="sd">        size_y (int): the vertical size of the board</span>
+<span class="sd">        win_conditions ([nullary functions]): each turn will be evaluated, if</span>
+<span class="sd">            ONE returns True, the board is WON</span>
+<span class="sd">        lose_condtitions ([nullary functions]): idem win_conditions, but if ONE</span>
+<span class="sd">            returns True, the board is considered lost</span>
+<span class="sd">        empty_repr (str, ~&quot;   &quot;): what should an empty espace be represented as?</span>
+<span class="sd">        turn_limit: (int, ~ -1): if turn limit is passed, raise TurnsAreOver error.</span>
+<span class="sd">            any negative number will be interpreted as no turn limit.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">win_conditions</span> <span class="o">=</span> <span class="n">win_conditions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lose_conditions</span> <span class="o">=</span> <span class="n">lose_conditions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size_x</span> <span class="o">=</span> <span class="n">size_x</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size_y</span> <span class="o">=</span> <span class="n">size_y</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">empty_repr</span> <span class="o">=</span> <span class="n">empty_repr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">board</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__create_board</span><span class="p">(</span><span class="n">size_x</span><span class="p">,</span> <span class="n">size_y</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">players</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">npcs</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># non playable characters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">turn_limit</span> <span class="o">=</span> <span class="n">turn_limit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_turn</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">won</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return True if the board has been won, False otherwise&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">([</span><span class="n">win_condition</span><span class="p">()</span> <span class="k">for</span> <span class="n">win_condition</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">win_conditions</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">lost</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return True if the board is lost, False otherwise&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">([</span><span class="n">lose_condition</span><span class="p">()</span> <span class="k">for</span> <span class="n">lose_condition</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lose_conditions</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">turn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_turn</span>
+
+    <span class="nd">@turn</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">turn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_turn</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">new_turn</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">turn</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TurnCanOnlyBeIncreased</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">turn</span><span class="p">,</span> <span class="n">new_turn</span><span class="p">)</span>
+        <span class="n">turns_passed</span> <span class="o">=</span> <span class="n">new_turn</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_turn</span>  <span class="c1"># in most cases this should be 1</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">turns_passed</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">character</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">npcs</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">players</span><span class="p">):</span>
+                <span class="n">character</span><span class="o">.</span><span class="n">do_passive_action</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_turn</span> <span class="o">=</span> <span class="n">new_turn</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">turn_limit</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_turn</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">turn_limit</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TurnsAreOver</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__create_board</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size_x</span><span class="p">,</span> <span class="n">size_y</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a board as described in the docstring of the class.&quot;&quot;&quot;</span>
+        <span class="n">board</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size_x</span><span class="p">):</span>
+            <span class="n">board</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">Tile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Position</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size_y</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="n">board</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;How the board will represented as a string.&quot;&quot;&quot;</span>
+
+        <span class="c1"># NOTE: this is quite the mess so don&#39; touch unless you know</span>
+        <span class="c1"># what you&#39;re doing</span>
+
+        <span class="k">def</span> <span class="nf">board_from_column_to_rows</span><span class="p">():</span>
+            <span class="sd">&quot;&quot;&quot;Our board is a list of COLUMNS. Return a list of ROWS.&quot;&quot;&quot;</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="c1"># range is reversed so as to start printing from the topmost row</span>
+            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size_y</span><span class="p">)):</span>
+                <span class="n">row</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size_x</span><span class="p">)]</span>
+                <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">rows</span>
+
+        <span class="n">map_</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">board_from_column_to_rows</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">tile</span> <span class="ow">in</span> <span class="n">row</span><span class="p">:</span>
+                <span class="n">name_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tile</span><span class="p">))</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">str</span><span class="p">(</span><span class="n">tile</span><span class="p">):</span>
+                    <span class="n">map_</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">empty_repr</span>
+                <span class="k">elif</span> <span class="n">name_length</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">map_</span> <span class="o">+=</span>  <span class="s2">&quot; </span><span class="si">{0}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tile</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">name_length</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="n">map_</span> <span class="o">+=</span> <span class="s2">&quot; </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tile</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">name_length</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                    <span class="n">map_</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tile</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">map_</span> <span class="o">+=</span> <span class="s2">&quot; </span><span class="si">{0}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tile</span><span class="p">))</span>
+
+            <span class="n">map_</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">map_</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the graphical representation of the map</span>
+<span class="sd">        plus the classical python representation of an object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1"> &#39;</span> <span class="o">+</span>
+                <span class="s1">&#39; Board Name: &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;|&#39;</span> <span class="o">+</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__repr__</span><span class="p">())</span>
+
+<div class="viewcode-block" id="Board.fill_board_with_blueprint"><a class="viewcode-back" href="../../ludema.html#ludema.board.Board.fill_board_with_blueprint">[docs]</a>    <span class="k">def</span> <span class="nf">fill_board_with_blueprint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">blueprint</span><span class="p">,</span> <span class="n">legend</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Take a blueprint and a legend for it and fill the board</span>
+<span class="sd">        according to them.</span>
+
+<span class="sd">        The blueprint string ignores blank spaces and automatically ignores</span>
+<span class="sd">        the first and last lines of the string. That is to allow for this</span>
+<span class="sd">        very convenient format:</span>
+
+<span class="sd">        blueprint: \&quot;\&quot;\&quot;</span>
+<span class="sd">        . . . . . .</span>
+<span class="sd">        . * * * * .</span>
+<span class="sd">        . * @ . * .</span>
+<span class="sd">        . * * * * .</span>
+<span class="sd">        . . . . . .</span>
+<span class="sd">        \&quot;\&quot;\&quot;</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        blueprint (str): a string representing the board, example given above</span>
+<span class="sd">        legend ({letter: (Piece | [Piece] | nullary function -&gt; Piece): a dictionary</span>
+<span class="sd">            that maps from characters found on the blueprint to which piece</span>
+<span class="sd">            should be put in the place specified by the blueprint.</span>
+<span class="sd">            if legend[letter] is a list, the last element of the list will be</span>
+<span class="sd">            put first (scanning from the top lefmost corner and continuing</span>
+<span class="sd">            to the right and then belown).</span>
+<span class="sd">            if legend[letter] is a nularry function that returns a Piece,</span>
+<span class="sd">            the piece returned by the nulary function will be put in place</span>
+
+<span class="sd">        @raise:</span>
+<span class="sd">        WrongeSizeOnX, WrongSizeOnY, RowsOfDifferentSizes, ImpossibleToExtractPiece</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># NOTE: this creates a copy of the lists in the dict, because</span>
+        <span class="c1"># extract_pieces_from_possible_containers modfies a potential list</span>
+        <span class="c1"># this dictionary holds as a value, leading to some very unfortunate</span>
+        <span class="c1"># and hard to trace bugs</span>
+        <span class="n">legend</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">copy_lists_in_dictionary</span><span class="p">(</span><span class="n">legend</span><span class="p">)</span>
+
+        <span class="n">blueprint</span> <span class="o">=</span> <span class="n">blueprint</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">blueprint</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">size_y</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">WrongSizeOnY</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">size_x</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">WrongSizeOnX</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="n">RowsOfDifferentSizes</span>
+
+        <span class="k">for</span> <span class="n">y_position</span><span class="p">,</span> <span class="n">string</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">lines</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">x_position</span><span class="p">,</span> <span class="n">letter</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">letter</span> <span class="ow">in</span> <span class="n">legend</span><span class="p">:</span>
+                    <span class="n">piece</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">extract_pieces_from_possible_containers</span><span class="p">(</span><span class="n">legend</span><span class="p">[</span><span class="n">letter</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">put_piece</span><span class="p">(</span><span class="n">piece</span><span class="p">,</span> <span class="n">x_position</span><span class="p">,</span> <span class="n">y_position</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Board.put_piece"><a class="viewcode-back" href="../../ludema.html#ludema.board.Board.put_piece">[docs]</a>    <span class="k">def</span> <span class="nf">put_piece</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piece</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Puts a piece on the board. Raises either OutOfBoardError or</span>
+<span class="sd">        PossitionOccupiedError if that wasn&#39;t possible.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        piece (Piece): the piece which shall be put into the board</span>
+<span class="sd">        x (int): The x coordinate where to put the piece.</span>
+<span class="sd">        y (int): the y coordinate where to put the piece.</span>
+
+<span class="sd">        @raise:</span>
+<span class="sd">        OutOfBoardError: if (x,y) coordinates are not on board</span>
+<span class="sd">        PositionOccupiedError: if position on (x,y) is already occupied and</span>
+<span class="sd">            that tile is not walkable</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">position</span> <span class="o">=</span> <span class="n">Position</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__try_moving_there</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">OutOfBoardError</span><span class="p">,</span> <span class="n">PositionOccupiedError</span><span class="p">):</span>
+            <span class="k">raise</span>
+
+        <span class="c1"># NOTE: This is THE ONLY PLACE where we create the bidirectional, 1 to 1</span>
+        <span class="c1"># relationship between a tile and a piece.</span>
+        <span class="n">destinity_tile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="p">[</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">][</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">]</span>
+        <span class="n">destinity_tile</span><span class="o">.</span><span class="n">piece</span> <span class="o">=</span> <span class="n">piece</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">piece</span><span class="p">,</span> <span class="n">pieces</span><span class="o">.</span><span class="n">NPC</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">npcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">piece</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">piece</span><span class="p">,</span> <span class="n">pieces</span><span class="o">.</span><span class="n">Player</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">players</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">piece</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Board.put_piece_on_column"><a class="viewcode-back" href="../../ludema.html#ludema.board.Board.put_piece_on_column">[docs]</a>    <span class="k">def</span> <span class="nf">put_piece_on_column</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piece_constructor</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">ranges</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Puts pieces returned by piece_constructor on the column</span>
+<span class="sd">        of position X.</span>
+
+<span class="sd">        If ranges are specified, the whole row will be filled.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        piece_constructor (nullary function): a function that returns the piece</span>
+<span class="sd">        x (int): the x position of the column</span>
+<span class="sd">        ranges (*tuples): arbitrary amout of ranges to put the piece on the column</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ranges</span><span class="p">:</span>
+            <span class="n">ranges</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size_y</span><span class="p">)]</span>
+
+        <span class="k">for</span> <span class="n">begin</span><span class="p">,</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">ranges</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">put_piece</span><span class="p">(</span><span class="n">piece_constructor</span><span class="p">(),</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Board.put_piece_on_row"><a class="viewcode-back" href="../../ludema.html#ludema.board.Board.put_piece_on_row">[docs]</a>    <span class="k">def</span> <span class="nf">put_piece_on_row</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piece_constructor</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">ranges</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Puts pieces returned by piece_constructor on the row</span>
+<span class="sd">        of position Y.</span>
+
+<span class="sd">        If ranges are specified, the whole row will be filled.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        piece_constructor (nullary function): a function that returns the piece</span>
+<span class="sd">        y (int): the y position of the column</span>
+<span class="sd">        ranges (*tuples): arbitrary amout of ranges to put the piece on the row</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ranges</span><span class="p">:</span>
+            <span class="n">ranges</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size_y</span><span class="p">)]</span>
+
+        <span class="k">for</span> <span class="n">begin</span><span class="p">,</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">ranges</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">put_piece</span><span class="p">(</span><span class="n">piece_constructor</span><span class="p">(),</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Board.remove_piece"><a class="viewcode-back" href="../../ludema.html#ludema.board.Board.remove_piece">[docs]</a>    <span class="k">def</span> <span class="nf">remove_piece</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piece</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Removes an object from the map given its position.</span>
+<span class="sd">        Returns the (x,y) coordinates where the piece was located.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        piece (Piece): the piece which will be removed</span>
+
+<span class="sd">        @return:</span>
+<span class="sd">        (int, int): the cordinates from where the piece was removed</span>
+
+<span class="sd">        @raise:</span>
+<span class="sd">        PieceIsNotOnThisBoardError: if the piece.home_board is not this one</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">piece</span><span class="o">.</span><span class="n">home_board</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PieceIsNotOnThisBoardError</span><span class="p">(</span><span class="n">piece</span><span class="o">=</span><span class="n">piece</span><span class="p">,</span> <span class="n">board</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">put_piece</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">piece</span><span class="o">.</span><span class="n">position_x</span><span class="p">,</span> <span class="n">piece</span><span class="o">.</span><span class="n">position_y</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">piece</span><span class="o">.</span><span class="n">position_x</span><span class="p">,</span> <span class="n">piece</span><span class="o">.</span><span class="n">position_y</span></div>
+
+<div class="viewcode-block" id="Board.get_adjacent_to_tile"><a class="viewcode-back" href="../../ludema.html#ludema.board.Board.get_adjacent_to_tile">[docs]</a>    <span class="k">def</span> <span class="nf">get_adjacent_to_tile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tile</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a dictionary of the form {DIRECTION: TILE or None}.</span>
+<span class="sd">        None will be the value only if the direction is outside of the map for</span>
+<span class="sd">        the requested center tile.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        tile (Tile): the &#39;center&#39; tile, which surroundings we&#39;re looking for</span>
+
+<span class="sd">        @return:</span>
+<span class="sd">        {Direction: Tile | None}: surroundings of the tile given as parameter</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">position</span> <span class="o">=</span> <span class="n">tile</span><span class="o">.</span><span class="n">position</span>
+        <span class="n">ideal_adjacent</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">Direction</span><span class="o">.</span><span class="n">UP</span><span class="p">:</span> <span class="n">Position</span><span class="p">(</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">position</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">Direction</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">:</span> <span class="n">Position</span><span class="p">(</span><span class="n">position</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">),</span>
+            <span class="n">Direction</span><span class="o">.</span><span class="n">DOWN</span><span class="p">:</span> <span class="n">Position</span><span class="p">(</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">position</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">Direction</span><span class="o">.</span><span class="n">LEFT</span><span class="p">:</span> <span class="n">Position</span><span class="p">(</span><span class="n">position</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>  <span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+            <span class="p">}</span>
+
+        <span class="n">adjacent</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">direction</span><span class="p">,</span> <span class="n">position</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">ideal_adjacent</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_valid_position</span><span class="p">(</span><span class="n">position</span><span class="p">):</span>
+                <span class="n">adjacent</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="p">[</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">][</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">adjacent</span><span class="p">[</span><span class="n">direction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">adjacent</span></div>
+
+<div class="viewcode-block" id="Board.column_on_position"><a class="viewcode-back" href="../../ludema.html#ludema.board.Board.column_on_position">[docs]</a>    <span class="k">def</span> <span class="nf">column_on_position</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Yields the tiles on column in position x.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        x (int): the column which tiles we want to get</span>
+
+<span class="sd">        @return:</span>
+<span class="sd">        {Generator} of the tiles in column x.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size_y</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Board.row_on_postition"><a class="viewcode-back" href="../../ludema.html#ludema.board.Board.row_on_postition">[docs]</a>    <span class="k">def</span> <span class="nf">row_on_postition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Yields the tiles on row in position y.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        y (int): the row which tiles we want to get</span>
+
+<span class="sd">        @return:</span>
+<span class="sd">        {Generator} of the tiles in row y.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size_x</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span></div>
+
+    <span class="k">def</span> <span class="nf">_is_valid_position</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        @args:</span>
+<span class="sd">        position (Position): the position which we are interested in</span>
+
+<span class="sd">        @return</span>
+<span class="sd">        boolean, True if position inside the map, False if not</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__check_position_inside_map</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+            <span class="n">valid_position</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="n">OutOfBoardError</span><span class="p">:</span>
+            <span class="n">valid_position</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="n">valid_position</span>
+
+    <span class="k">def</span> <span class="nf">__try_moving_there</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Raises either a OutOfBoardError or a PositionOccupiedError</span>
+<span class="sd">        if the position given is out of the board or occupied.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        position (Position): the position which we are insterested in</span>
+
+<span class="sd">        @raise:</span>
+<span class="sd">        OutOfBoardError: if the position is outside of this board</span>
+<span class="sd">        PositionOccupiedError: if the posision is already occupied</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">conditions</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__check_position_inside_map</span><span class="p">,</span>
+                      <span class="bp">self</span><span class="o">.</span><span class="n">__check_position_occupied</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">condition</span> <span class="ow">in</span> <span class="n">conditions</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">condition</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="n">OutOfBoardError</span><span class="p">,</span> <span class="n">PositionOccupiedError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">e</span>
+
+    <span class="k">def</span> <span class="nf">__check_position_inside_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return True if a given position is found within the limits</span>
+<span class="sd">        of the board.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        position (Position): the position to check</span>
+
+<span class="sd">        @raise:</span>
+<span class="sd">        OutOfBoardError: if posisition is out of this board</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x_pos</span><span class="p">,</span> <span class="n">y_pos</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">),</span> <span class="nb">abs</span><span class="p">(</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">size_y</span> <span class="o">&lt;=</span> <span class="n">y_pos</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">size_x</span> <span class="o">&lt;=</span> <span class="n">x_pos</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">OutOfBoardError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__check_position_occupied</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return True if a given position if already occupied by other</span>
+<span class="sd">        object.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        position (Position): the position to check</span>
+
+<span class="sd">        @raise:</span>
+<span class="sd">        PositionOccupiedError: if posisition is already occupied</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="p">[</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">][</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">tile</span><span class="o">.</span><span class="n">piece</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">tile</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">walkable</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PositionOccupiedError</span><span class="p">(</span><span class="n">tile</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Joaquin L. Pereyra.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

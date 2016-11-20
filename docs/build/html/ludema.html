@@ -1,0 +1,576 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>ludema package &#8212; Ludema 1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="Ludema 1 documentation" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ludema-package">
+<h1>ludema package<a class="headerlink" href="#ludema-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-ludema.board">
+<span id="ludema-board-module"></span><h2>ludema.board module<a class="headerlink" href="#module-ludema.board" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="ludema.board.Board">
+<em class="property">class </em><code class="descclassname">ludema.board.</code><code class="descname">Board</code><span class="sig-paren">(</span><em>name</em>, <em>size_x</em>, <em>size_y</em>, <em>win_conditions</em>, <em>lose_conditions</em>, <em>empty_repr='   '</em>, <em>turn_limit=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/board.html#Board"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.board.Board" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Defines a simple square board where Pieces can move.
+The board&#8217;s main attribute is the board itself, which is a matrix of the
+form (for a 2x3 board):
+board = [[Tile(self, Position(0, 0)], Tile(self, Position(0, 1))]</p>
+<blockquote>
+<div>[Tile(self, Position(1, 0))], Tile(self, Position(1, 1))],
+[Tile(self, Position(2, 0))], Tile(self, Position(2, 1))]</div></blockquote>
+<p>This structure was chosen so you could so board[x][y] and get a meaningful
+result.</p>
+<dl class="method">
+<dt id="ludema.board.Board.column_on_position">
+<code class="descname">column_on_position</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/board.html#Board.column_on_position"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.board.Board.column_on_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yields the tiles on column in position x.</p>
+<p>&#64;args:
+x (int): the column which tiles we want to get</p>
+<p>&#64;return:
+{Generator} of the tiles in column x.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ludema.board.Board.fill_board_with_blueprint">
+<code class="descname">fill_board_with_blueprint</code><span class="sig-paren">(</span><em>blueprint</em>, <em>legend</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/board.html#Board.fill_board_with_blueprint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.board.Board.fill_board_with_blueprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take a blueprint and a legend for it and fill the board
+according to them.</p>
+<p>The blueprint string ignores blank spaces and automatically ignores
+the first and last lines of the string. That is to allow for this
+very convenient format:</p>
+<p>blueprint: &#8220;&#8221;&#8221;
+. . . . . .
+. * * * * .
+. * &#64; . * .
+. * * * * .
+. . . . . .
+&#8220;&#8221;&#8220;</p>
+<p>&#64;args:
+blueprint (str): a string representing the board, example given above
+legend ({letter: (Piece | [Piece] | nullary function -&gt; Piece): a dictionary</p>
+<blockquote>
+<div>that maps from characters found on the blueprint to which piece
+should be put in the place specified by the blueprint.
+if legend[letter] is a list, the last element of the list will be
+put first (scanning from the top lefmost corner and continuing
+to the right and then belown).
+if legend[letter] is a nularry function that returns a Piece,
+the piece returned by the nulary function will be put in place</div></blockquote>
+<p>&#64;raise:
+WrongeSizeOnX, WrongSizeOnY, RowsOfDifferentSizes, ImpossibleToExtractPiece</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ludema.board.Board.get_adjacent_to_tile">
+<code class="descname">get_adjacent_to_tile</code><span class="sig-paren">(</span><em>tile</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/board.html#Board.get_adjacent_to_tile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.board.Board.get_adjacent_to_tile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a dictionary of the form {DIRECTION: TILE or None}.
+None will be the value only if the direction is outside of the map for
+the requested center tile.</p>
+<p>&#64;args:
+tile (Tile): the &#8216;center&#8217; tile, which surroundings we&#8217;re looking for</p>
+<p>&#64;return:
+{Direction: Tile | None}: surroundings of the tile given as parameter</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ludema.board.Board.lost">
+<code class="descname">lost</code><a class="headerlink" href="#ludema.board.Board.lost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if the board is lost, False otherwise</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="ludema.board.Board.new_from_blueprint">
+<em class="property">classmethod </em><code class="descname">new_from_blueprint</code><span class="sig-paren">(</span><em>name</em>, <em>blueprint</em>, <em>legend</em>, <em>win_conditions</em>, <em>lose_conditions</em>, <em>empty_repr='   '</em>, <em>turn_limit=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/board.html#Board.new_from_blueprint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.board.Board.new_from_blueprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>An alternative creator for Board, which uses
+Board.fill_board_with_blueprint inmediatly after creation to create
+a board according to a blueprint and a legend. Refer to documentation
+for that method for more information.</p>
+<p>&#64;args:
+name (str): the name of the board
+blueprint (str): the blueprint for the board
+legend ({key: (Piece | [Piece] | (nullary function -&gt; Piece}): legend</p>
+<blockquote>
+<div>for the blueprint</div></blockquote>
+<dl class="docutils">
+<dt>win_conditions ([nullary functions]): each turn will be evaluated, if</dt>
+<dd>ONE returns True, the board is WON</dd>
+<dt>lose_condtitions ([nullary functions]): idem win_conditions, but if ONE</dt>
+<dd>returns True, the board is considered lost</dd>
+</dl>
+<p>empty_repr (str, ~&#8221;   &#8221;): what should an empty espace be represented as?
+turn_limit: (int, ~ -1): if turn limit is passed, raise TurnsAreOver error.</p>
+<blockquote>
+<div>any negative number will be interpreted as no turn limit.</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="ludema.board.Board.put_piece">
+<code class="descname">put_piece</code><span class="sig-paren">(</span><em>piece</em>, <em>x</em>, <em>y</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/board.html#Board.put_piece"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.board.Board.put_piece" title="Permalink to this definition">¶</a></dt>
+<dd><p>Puts a piece on the board. Raises either OutOfBoardError or
+PossitionOccupiedError if that wasn&#8217;t possible.</p>
+<p>&#64;args:
+piece (Piece): the piece which shall be put into the board
+x (int): The x coordinate where to put the piece.
+y (int): the y coordinate where to put the piece.</p>
+<p>&#64;raise:
+OutOfBoardError: if (x,y) coordinates are not on board
+PositionOccupiedError: if position on (x,y) is already occupied and</p>
+<blockquote>
+<div>that tile is not walkable</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="ludema.board.Board.put_piece_on_column">
+<code class="descname">put_piece_on_column</code><span class="sig-paren">(</span><em>piece_constructor</em>, <em>x</em>, <em>ranges</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/board.html#Board.put_piece_on_column"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.board.Board.put_piece_on_column" title="Permalink to this definition">¶</a></dt>
+<dd><p>Puts pieces returned by piece_constructor on the column
+of position X.</p>
+<p>If ranges are specified, the whole row will be filled.</p>
+<p>&#64;args:
+piece_constructor (nullary function): a function that returns the piece
+x (int): the x position of the column
+ranges (<a href="#id1"><span class="problematic" id="id2">*</span></a>tuples): arbitrary amout of ranges to put the piece on the column</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ludema.board.Board.put_piece_on_row">
+<code class="descname">put_piece_on_row</code><span class="sig-paren">(</span><em>piece_constructor</em>, <em>y</em>, <em>ranges</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/board.html#Board.put_piece_on_row"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.board.Board.put_piece_on_row" title="Permalink to this definition">¶</a></dt>
+<dd><p>Puts pieces returned by piece_constructor on the row
+of position Y.</p>
+<p>If ranges are specified, the whole row will be filled.</p>
+<p>&#64;args:
+piece_constructor (nullary function): a function that returns the piece
+y (int): the y position of the column
+ranges (<a href="#id3"><span class="problematic" id="id4">*</span></a>tuples): arbitrary amout of ranges to put the piece on the row</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ludema.board.Board.remove_piece">
+<code class="descname">remove_piece</code><span class="sig-paren">(</span><em>piece</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/board.html#Board.remove_piece"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.board.Board.remove_piece" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes an object from the map given its position.
+Returns the (x,y) coordinates where the piece was located.</p>
+<p>&#64;args:
+piece (Piece): the piece which will be removed</p>
+<p>&#64;return:
+(int, int): the cordinates from where the piece was removed</p>
+<p>&#64;raise:
+PieceIsNotOnThisBoardError: if the piece.home_board is not this one</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ludema.board.Board.row_on_postition">
+<code class="descname">row_on_postition</code><span class="sig-paren">(</span><em>y</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/board.html#Board.row_on_postition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.board.Board.row_on_postition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yields the tiles on row in position y.</p>
+<p>&#64;args:
+y (int): the row which tiles we want to get</p>
+<p>&#64;return:
+{Generator} of the tiles in row y.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ludema.board.Board.turn">
+<code class="descname">turn</code><a class="headerlink" href="#ludema.board.Board.turn" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="ludema.board.Board.won">
+<code class="descname">won</code><a class="headerlink" href="#ludema.board.Board.won" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if the board has been won, False otherwise</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ludema.board.Tile">
+<em class="property">class </em><code class="descclassname">ludema.board.</code><code class="descname">Tile</code><span class="sig-paren">(</span><em>board</em>, <em>position</em>, <em>piece=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/board.html#Tile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.board.Tile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>A tile is the atomic unit of the Board. Every tile must have a
+board to live in. Every tile must have a position on said board.
+A tile may or may not hold a piece.</p>
+<dl class="attribute">
+<dt id="ludema.board.Tile.piece">
+<code class="descname">piece</code><a class="headerlink" href="#ludema.board.Tile.piece" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-ludema.exceptions">
+<span id="ludema-exceptions-module"></span><h2>ludema.exceptions module<a class="headerlink" href="#module-ludema.exceptions" title="Permalink to this headline">¶</a></h2>
+<dl class="exception">
+<dt id="ludema.exceptions.BoardConstructionError">
+<em class="property">exception </em><code class="descclassname">ludema.exceptions.</code><code class="descname">BoardConstructionError</code><a class="reference internal" href="_modules/ludema/exceptions.html#BoardConstructionError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.exceptions.BoardConstructionError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ludema.exceptions.BoardError" title="ludema.exceptions.BoardError"><code class="xref py py-class docutils literal"><span class="pre">ludema.exceptions.BoardError</span></code></a></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="ludema.exceptions.BoardError">
+<em class="property">exception </em><code class="descclassname">ludema.exceptions.</code><code class="descname">BoardError</code><a class="reference internal" href="_modules/ludema/exceptions.html#BoardError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.exceptions.BoardError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ludema.exceptions._GameError</span></code></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="ludema.exceptions.CharacterCantAttackError">
+<em class="property">exception </em><code class="descclassname">ludema.exceptions.</code><code class="descname">CharacterCantAttackError</code><span class="sig-paren">(</span><em>character</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/exceptions.html#CharacterCantAttackError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.exceptions.CharacterCantAttackError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ludema.exceptions._GameError</span></code></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="ludema.exceptions.ImpossibleToExtractPiece">
+<em class="property">exception </em><code class="descclassname">ludema.exceptions.</code><code class="descname">ImpossibleToExtractPiece</code><span class="sig-paren">(</span><em>container</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/exceptions.html#ImpossibleToExtractPiece"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.exceptions.ImpossibleToExtractPiece" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ludema.exceptions.BoardConstructionError" title="ludema.exceptions.BoardConstructionError"><code class="xref py py-class docutils literal"><span class="pre">ludema.exceptions.BoardConstructionError</span></code></a></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="ludema.exceptions.NoItemToGrab">
+<em class="property">exception </em><code class="descclassname">ludema.exceptions.</code><code class="descname">NoItemToGrab</code><span class="sig-paren">(</span><em>character</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/exceptions.html#NoItemToGrab"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.exceptions.NoItemToGrab" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ludema.exceptions._GameError</span></code></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="ludema.exceptions.OutOfBoardError">
+<em class="property">exception </em><code class="descclassname">ludema.exceptions.</code><code class="descname">OutOfBoardError</code><span class="sig-paren">(</span><em>board</em>, <em>position</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/exceptions.html#OutOfBoardError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.exceptions.OutOfBoardError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ludema.exceptions.BoardError" title="ludema.exceptions.BoardError"><code class="xref py py-class docutils literal"><span class="pre">ludema.exceptions.BoardError</span></code></a></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="ludema.exceptions.PieceDoesNotHaveItemError">
+<em class="property">exception </em><code class="descclassname">ludema.exceptions.</code><code class="descname">PieceDoesNotHaveItemError</code><span class="sig-paren">(</span><em>piece</em>, <em>item</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/exceptions.html#PieceDoesNotHaveItemError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.exceptions.PieceDoesNotHaveItemError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ludema.exceptions._GameError</span></code></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="ludema.exceptions.PieceIsNotOnATileError">
+<em class="property">exception </em><code class="descclassname">ludema.exceptions.</code><code class="descname">PieceIsNotOnATileError</code><span class="sig-paren">(</span><em>piece</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/exceptions.html#PieceIsNotOnATileError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.exceptions.PieceIsNotOnATileError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ludema.exceptions.BoardError" title="ludema.exceptions.BoardError"><code class="xref py py-class docutils literal"><span class="pre">ludema.exceptions.BoardError</span></code></a></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="ludema.exceptions.PieceIsNotOnThisBoardError">
+<em class="property">exception </em><code class="descclassname">ludema.exceptions.</code><code class="descname">PieceIsNotOnThisBoardError</code><span class="sig-paren">(</span><em>piece</em>, <em>board</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/exceptions.html#PieceIsNotOnThisBoardError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.exceptions.PieceIsNotOnThisBoardError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ludema.exceptions.BoardError" title="ludema.exceptions.BoardError"><code class="xref py py-class docutils literal"><span class="pre">ludema.exceptions.BoardError</span></code></a></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="ludema.exceptions.PositionOccupiedError">
+<em class="property">exception </em><code class="descclassname">ludema.exceptions.</code><code class="descname">PositionOccupiedError</code><span class="sig-paren">(</span><em>tile</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/exceptions.html#PositionOccupiedError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.exceptions.PositionOccupiedError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ludema.exceptions.BoardError" title="ludema.exceptions.BoardError"><code class="xref py py-class docutils literal"><span class="pre">ludema.exceptions.BoardError</span></code></a></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="ludema.exceptions.RowsOfDifferentSizes">
+<em class="property">exception </em><code class="descclassname">ludema.exceptions.</code><code class="descname">RowsOfDifferentSizes</code><a class="reference internal" href="_modules/ludema/exceptions.html#RowsOfDifferentSizes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.exceptions.RowsOfDifferentSizes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ludema.exceptions.BoardConstructionError" title="ludema.exceptions.BoardConstructionError"><code class="xref py py-class docutils literal"><span class="pre">ludema.exceptions.BoardConstructionError</span></code></a></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="ludema.exceptions.TileIsEmptyError">
+<em class="property">exception </em><code class="descclassname">ludema.exceptions.</code><code class="descname">TileIsEmptyError</code><span class="sig-paren">(</span><em>character</em>, <em>tile</em>, <em>error_string=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/exceptions.html#TileIsEmptyError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.exceptions.TileIsEmptyError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ludema.exceptions._GameError</span></code></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="ludema.exceptions.TurnCanOnlyBeIncreased">
+<em class="property">exception </em><code class="descclassname">ludema.exceptions.</code><code class="descname">TurnCanOnlyBeIncreased</code><span class="sig-paren">(</span><em>prev_turn</em>, <em>new_turn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/exceptions.html#TurnCanOnlyBeIncreased"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.exceptions.TurnCanOnlyBeIncreased" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ludema.exceptions._GameError</span></code></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="ludema.exceptions.TurnsAreOver">
+<em class="property">exception </em><code class="descclassname">ludema.exceptions.</code><code class="descname">TurnsAreOver</code><span class="sig-paren">(</span><em>board</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/exceptions.html#TurnsAreOver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.exceptions.TurnsAreOver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ludema.exceptions._GameError</span></code></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="ludema.exceptions.WrongSizeOnX">
+<em class="property">exception </em><code class="descclassname">ludema.exceptions.</code><code class="descname">WrongSizeOnX</code><a class="reference internal" href="_modules/ludema/exceptions.html#WrongSizeOnX"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.exceptions.WrongSizeOnX" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ludema.exceptions.BoardConstructionError" title="ludema.exceptions.BoardConstructionError"><code class="xref py py-class docutils literal"><span class="pre">ludema.exceptions.BoardConstructionError</span></code></a></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="ludema.exceptions.WrongSizeOnY">
+<em class="property">exception </em><code class="descclassname">ludema.exceptions.</code><code class="descname">WrongSizeOnY</code><a class="reference internal" href="_modules/ludema/exceptions.html#WrongSizeOnY"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.exceptions.WrongSizeOnY" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ludema.exceptions.BoardConstructionError" title="ludema.exceptions.BoardConstructionError"><code class="xref py py-class docutils literal"><span class="pre">ludema.exceptions.BoardConstructionError</span></code></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-ludema.pieces">
+<span id="ludema-pieces-module"></span><h2>ludema.pieces module<a class="headerlink" href="#module-ludema.pieces" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="ludema.pieces.Character">
+<em class="property">class </em><code class="descclassname">ludema.pieces.</code><code class="descname">Character</code><span class="sig-paren">(</span><em>letter</em>, <em>name</em>, <em>movements=None</em>, <em>attack_damage=1</em>, <em>items=None</em>, <em>health=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/pieces.html#Character"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.pieces.Character" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ludema.abstract.piece.Piece</span></code></p>
+<p>A baseclass for all characters, be them the Player, NPCs or enemies.
+Should not be used directly.</p>
+<dl class="method">
+<dt id="ludema.pieces.Character.do_active_action">
+<code class="descname">do_active_action</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/pieces.html#Character.do_active_action"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.pieces.Character.do_active_action" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ludema.pieces.Character.do_passive_action">
+<code class="descname">do_passive_action</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/pieces.html#Character.do_passive_action"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.pieces.Character.do_passive_action" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ludema.pieces.Character.grab_item">
+<code class="descname">grab_item</code><span class="sig-paren">(</span><em>tile_where_item_is</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/pieces.html#Character.grab_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.pieces.Character.grab_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>Grabs an item from tile_where item is.</p>
+<p>&#64;args:
+tile_where_item_is (Tile): the tile where the item should be located</p>
+<p>&#64;return:
+True if item could be grabbed (an item was found on tile_where_item_is)
+or False if it wasn&#8217;t found there</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ludema.pieces.Character.grab_item_from_surroundings">
+<code class="descname">grab_item_from_surroundings</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/pieces.html#Character.grab_item_from_surroundings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.pieces.Character.grab_item_from_surroundings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Grabs an item from the surroundings of the Character.
+Stops at first item grabbed.
+Items look-up goes clockwise.</p>
+<p>&#64;return:
+True if item found and grabbed, False otherwise.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ludema.pieces.Character.is_dead">
+<code class="descname">is_dead</code><a class="headerlink" href="#ludema.pieces.Character.is_dead" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if health is below 0, False otherwise.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ludema.pieces.Character.use_item">
+<code class="descname">use_item</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/pieces.html#Character.use_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.pieces.Character.use_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>Safely uses an item.</p>
+<p>&#64;args:
+item (Item): the item to be used</p>
+<p>&#64;return
+(True, action) if the item could be used. action is the return value</p>
+<blockquote>
+<div>of calling item.do_action()</div></blockquote>
+<p>(False, None) if the item could not be used.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ludema.pieces.Item">
+<em class="property">class </em><code class="descclassname">ludema.pieces.</code><code class="descname">Item</code><span class="sig-paren">(</span><em>letter</em>, <em>name</em>, <em>owner=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/pieces.html#Item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.pieces.Item" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ludema.abstract.piece.Piece</span></code></p>
+<p>A class to represent items which can be owned and used by players
+and NPCs alike. It&#8217;s intended to be subclassed as to define their action.</p>
+<dl class="method">
+<dt id="ludema.pieces.Item.do_action">
+<code class="descname">do_action</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/pieces.html#Item.do_action"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.pieces.Item.do_action" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="ludema.pieces.Item.has_owner">
+<code class="descname">has_owner</code><a class="headerlink" href="#ludema.pieces.Item.has_owner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if the Item has an owner, False otherwise.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ludema.pieces.NPC">
+<em class="property">class </em><code class="descclassname">ludema.pieces.</code><code class="descname">NPC</code><span class="sig-paren">(</span><em>letter</em>, <em>name</em>, <em>movements=None</em>, <em>attack_damage=1</em>, <em>items=None</em>, <em>health=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/pieces.html#NPC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.pieces.NPC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ludema.pieces.Character" title="ludema.pieces.Character"><code class="xref py py-class docutils literal"><span class="pre">ludema.pieces.Character</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="ludema.pieces.Player">
+<em class="property">class </em><code class="descclassname">ludema.pieces.</code><code class="descname">Player</code><span class="sig-paren">(</span><em>letter</em>, <em>name</em>, <em>movements=None</em>, <em>attack_damage=1</em>, <em>items=None</em>, <em>health=10</em>, <em>turn_passing_actions=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/pieces.html#Player"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.pieces.Player" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ludema.pieces.Character" title="ludema.pieces.Character"><code class="xref py py-class docutils literal"><span class="pre">ludema.pieces.Character</span></code></a></p>
+<p>The Player character. The most important characteristic of the Player
+is that some of its methods, when called, will make the board in which
+this Player live advance one turn.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="ludema.pieces.ShortRangeItem">
+<em class="property">class </em><code class="descclassname">ludema.pieces.</code><code class="descname">ShortRangeItem</code><span class="sig-paren">(</span><em>letter</em>, <em>name</em>, <em>owner=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/pieces.html#ShortRangeItem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.pieces.ShortRangeItem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ludema.pieces.Item" title="ludema.pieces.Item"><code class="xref py py-class docutils literal"><span class="pre">ludema.pieces.Item</span></code></a></p>
+<p>A class to represent items which can only affect its surroundings,
+both if carried by an owner of if it lies on the ground.</p>
+<dl class="method">
+<dt id="ludema.pieces.ShortRangeItem.do_action">
+<code class="descname">do_action</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/pieces.html#ShortRangeItem.do_action"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.pieces.ShortRangeItem.do_action" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="ludema.pieces.ShortRangeItem.range">
+<code class="descname">range</code><a class="headerlink" href="#ludema.pieces.ShortRangeItem.range" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list containing all the Tiles which would be affected by this
+item if used.</p>
+<p>May be None if the Item has no owner and it hasn&#8217;t been put onto a
+map yet.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ludema.pieces.Wall">
+<em class="property">class </em><code class="descclassname">ludema.pieces.</code><code class="descname">Wall</code><span class="sig-paren">(</span><em>letter='.'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/pieces.html#Wall"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.pieces.Wall" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ludema.abstract.piece.Piece</span></code></p>
+<p>A very simple piece to represent walls.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-ludema.screen">
+<span id="ludema-screen-module"></span><h2>ludema.screen module<a class="headerlink" href="#module-ludema.screen" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="ludema.screen.Screen">
+<em class="property">class </em><code class="descclassname">ludema.screen.</code><code class="descname">Screen</code><span class="sig-paren">(</span><em>*screen_print_functions</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/screen.html#Screen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.screen.Screen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="ludema.screen.Screen.clear">
+<code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/screen.html#Screen.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.screen.Screen.clear" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ludema.screen.Screen.show">
+<code class="descname">show</code><span class="sig-paren">(</span><em>clear_after=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/screen.html#Screen.show"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.screen.Screen.show" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-ludema.user_input">
+<span id="ludema-user-input-module"></span><h2>ludema.user_input module<a class="headerlink" href="#module-ludema.user_input" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-ludema.utils">
+<span id="ludema-utils-module"></span><h2>ludema.utils module<a class="headerlink" href="#module-ludema.utils" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="ludema.utils.copy_lists_in_dictionary">
+<code class="descclassname">ludema.utils.</code><code class="descname">copy_lists_in_dictionary</code><span class="sig-paren">(</span><em>dict</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/utils.html#copy_lists_in_dictionary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.utils.copy_lists_in_dictionary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new dictionary with a shallow copy of the lists present on
+the original dictionary.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="ludema.utils.extract_pieces_from_possible_containers">
+<code class="descclassname">ludema.utils.</code><code class="descname">extract_pieces_from_possible_containers</code><span class="sig-paren">(</span><em>container</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ludema/utils.html#extract_pieces_from_possible_containers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ludema.utils.extract_pieces_from_possible_containers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Grabs a container, which from we can hopefully extract a list.</p>
+<p>&#64;args:
+container (nullary function -&gt; Piece | list | Piece): the container for the Piece</p>
+<p>&#64;raise:
+ImpossibleToExtractPiece</p>
+<p>&#64;side effects:
+If type(container) == list, this function pops the last element.</p>
+<p>&#64;return:
+Piece</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-ludema">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-ludema" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">ludema package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-ludema.board">ludema.board module</a></li>
+<li><a class="reference internal" href="#module-ludema.exceptions">ludema.exceptions module</a></li>
+<li><a class="reference internal" href="#module-ludema.pieces">ludema.pieces module</a></li>
+<li><a class="reference internal" href="#module-ludema.screen">ludema.screen module</a></li>
+<li><a class="reference internal" href="#module-ludema.user_input">ludema.user_input module</a></li>
+<li><a class="reference internal" href="#module-ludema.utils">ludema.utils module</a></li>
+<li><a class="reference internal" href="#module-ludema">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/ludema.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Joaquin L. Pereyra.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/ludema.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,342 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>ludema.pieces &#8212; Ludema 1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="Ludema 1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for ludema.pieces</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">wraps</span>
+<span class="kn">from</span> <span class="nn">ludema.abstract.piece</span> <span class="k">import</span> <span class="n">Piece</span>
+<span class="kn">from</span> <span class="nn">ludema.abstract.actions</span> <span class="k">import</span> <span class="n">Action</span>
+<span class="kn">from</span> <span class="nn">ludema.abstract.utils</span> <span class="k">import</span> <span class="n">Direction</span>
+<span class="kn">from</span> <span class="nn">ludema.exceptions</span> <span class="k">import</span> <span class="p">(</span><span class="n">PieceDoesNotHaveItemError</span><span class="p">,</span> <span class="n">PieceIsNotOnATileError</span><span class="p">,</span>
+                               <span class="n">PieceIsNotOnThisBoardError</span><span class="p">,</span> <span class="n">OutOfBoardError</span><span class="p">,</span>
+                               <span class="n">PositionOccupiedError</span><span class="p">,</span> <span class="n">NoItemToGrab</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Wall"><a class="viewcode-back" href="../../ludema.html#ludema.pieces.Wall">[docs]</a><span class="k">class</span> <span class="nc">Wall</span><span class="p">(</span><span class="n">Piece</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A very simple piece to represent walls.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+        <span class="n">Piece</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Item"><a class="viewcode-back" href="../../ludema.html#ludema.pieces.Item">[docs]</a><span class="k">class</span> <span class="nc">Item</span><span class="p">(</span><span class="n">Piece</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A class to represent items which can be owned and used by players</span>
+<span class="sd">    and NPCs alike. It&#39;s intended to be subclassed as to define their action.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initiates an item.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        letter (str): the letter by which the item will be represented</span>
+<span class="sd">        name (str): the name of the item</span>
+<span class="sd">        owner (Piece, ~None): the owner of the piece.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Piece</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">owner</span> <span class="o">=</span> <span class="n">owner</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">has_owner</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return True if the Item has an owner, False otherwise.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">owner</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="Item.do_action"><a class="viewcode-back" href="../../ludema.html#ludema.pieces.Item.do_action">[docs]</a>    <span class="k">def</span> <span class="nf">do_action</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Every item should have its own do_action method!&quot;</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="ShortRangeItem"><a class="viewcode-back" href="../../ludema.html#ludema.pieces.ShortRangeItem">[docs]</a><span class="k">class</span> <span class="nc">ShortRangeItem</span><span class="p">(</span><span class="n">Item</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A class to represent items which can only affect its surroundings,</span>
+<span class="sd">    both if carried by an owner of if it lies on the ground.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initiates a short range item.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        letter (str): the letter by which the item will be represented</span>
+<span class="sd">        name (str): the name of the item</span>
+<span class="sd">        owner (Piece, ~None): the owner of the piece.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Item</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">owner</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A list containing all the Tiles which would be affected by this</span>
+<span class="sd">        item if used.</span>
+
+<span class="sd">        May be None if the Item has no owner and it hasn&#39;t been put onto a</span>
+<span class="sd">        map yet.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">only_valid_from</span><span class="p">(</span><span class="n">s</span><span class="p">):</span> <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">only_valid_from</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="o">.</span><span class="n">surroundings</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">only_valid_from</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">surroundings</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">home_tile</span> <span class="k">else</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="ShortRangeItem.do_action"><a class="viewcode-back" href="../../ludema.html#ludema.pieces.ShortRangeItem.do_action">[docs]</a>    <span class="k">def</span> <span class="nf">do_action</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Every item should have its own do_action method!&quot;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Character"><a class="viewcode-back" href="../../ludema.html#ludema.pieces.Character">[docs]</a><span class="k">class</span> <span class="nc">Character</span><span class="p">(</span><span class="n">Piece</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A baseclass for all characters, be them the Player, NPCs or enemies.</span>
+<span class="sd">    Should not be used directly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">movements</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attack_damage</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">items</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">health</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Init a Character.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        letter (str): the letter by which the item will be represented</span>
+<span class="sd">        name (str): the name of the item</span>
+<span class="sd">        movements ([nullary functions] | [] | ~None): leave None</span>
+<span class="sd">            so the Character will have the defaults movements (up, down, left, right).</span>
+<span class="sd">            Pass a list of nullary functions to specify your own movement functions.</span>
+<span class="sd">            Pass an empty list to explictly set no movements for this Character.</span>
+<span class="sd">        attack_damage (int, ~1): how much damage should this piece do when attacking</span>
+<span class="sd">        items ([Items] | ~None): the Items this piece should start with.</span>
+<span class="sd">            if None, items will be an empty list.</span>
+<span class="sd">        health (int, ~10): how much health should this character have.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Piece</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">movements</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">items</span> <span class="o">=</span> <span class="n">items</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">health</span> <span class="o">=</span> <span class="n">health</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attack_damage</span> <span class="o">=</span> <span class="n">attack_damage</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_dead</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return True if health is below 0, False otherwise.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">health</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">_unsafe_use_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Uses item _item_ on the home_map of the character. Returns</span>
+<span class="sd">        the action specified by the item.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        item (Item): the item to be used</span>
+
+<span class="sd">        @raise:</span>
+<span class="sd">        PieceDoesNotHaveItemError, PieceIsNotOnATileError</span>
+
+<span class="sd">        @return:</span>
+<span class="sd">        action, the return value of calling item.do_action()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PieceDoesNotHaveItemError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">surroundings</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PieceIsNotOnATileError</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="n">action</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">do_action</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">action</span>
+
+<div class="viewcode-block" id="Character.use_item"><a class="viewcode-back" href="../../ludema.html#ludema.pieces.Character.use_item">[docs]</a>    <span class="k">def</span> <span class="nf">use_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Safely uses an item.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        item (Item): the item to be used</span>
+
+<span class="sd">        @return</span>
+<span class="sd">        (True, action) if the item could be used. action is the return value</span>
+<span class="sd">            of calling item.do_action()</span>
+<span class="sd">        (False, None) if the item could not be used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unsafe_use_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">action</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">PieceDoesNotHaveItemError</span><span class="p">,</span> <span class="n">PieceIsNotOnATileError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span></div>
+
+    <span class="k">def</span> <span class="nf">_unsafe_grab_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tile_where_item_is</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Grabs the item from tile_where_item_is. Will throw an exception</span>
+<span class="sd">        if the Piece on tile_where_item_is is not an Item.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        tile_where_item_is (Tile): the tile where the item should be located</span>
+
+<span class="sd">        @raise:</span>
+<span class="sd">        NoItemToGrab</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tile_where_item_is</span><span class="o">.</span><span class="n">piece</span><span class="p">,</span> <span class="n">Item</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">NoItemToGrab</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tile_where_item_is</span><span class="o">.</span><span class="n">piece</span><span class="p">)</span>
+        <span class="n">tile_where_item_is</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">owner</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="n">tile_where_item_is</span><span class="o">.</span><span class="n">piece</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="Character.grab_item"><a class="viewcode-back" href="../../ludema.html#ludema.pieces.Character.grab_item">[docs]</a>    <span class="k">def</span> <span class="nf">grab_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tile_where_item_is</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Grabs an item from tile_where item is.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        tile_where_item_is (Tile): the tile where the item should be located</span>
+
+<span class="sd">        @return:</span>
+<span class="sd">        True if item could be grabbed (an item was found on tile_where_item_is)</span>
+<span class="sd">        or False if it wasn&#39;t found there</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_unsafe_grab_item</span><span class="p">(</span><span class="n">tile_where_item_is</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="n">NoItemToGrab</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Character.grab_item_from_surroundings"><a class="viewcode-back" href="../../ludema.html#ludema.pieces.Character.grab_item_from_surroundings">[docs]</a>    <span class="k">def</span> <span class="nf">grab_item_from_surroundings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Grabs an item from the surroundings of the Character.</span>
+<span class="sd">        Stops at first item grabbed.</span>
+<span class="sd">        Items look-up goes clockwise.</span>
+
+<span class="sd">        @return:</span>
+<span class="sd">        True if item found and grabbed, False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">tile</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">surroundings</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">item_grabbed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grab_item</span><span class="p">(</span><span class="n">tile</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">item_grabbed</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Character.do_passive_action"><a class="viewcode-back" href="../../ludema.html#ludema.pieces.Character.do_passive_action">[docs]</a>    <span class="k">def</span> <span class="nf">do_passive_action</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Character.do_active_action"><a class="viewcode-back" href="../../ludema.html#ludema.pieces.Character.do_active_action">[docs]</a>    <span class="k">def</span> <span class="nf">do_active_action</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div></div>
+
+
+<div class="viewcode-block" id="Player"><a class="viewcode-back" href="../../ludema.html#ludema.pieces.Player">[docs]</a><span class="k">class</span> <span class="nc">Player</span><span class="p">(</span><span class="n">Character</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The Player character. The most important characteristic of the Player</span>
+<span class="sd">    is that some of its methods, when called, will make the board in which</span>
+<span class="sd">    this Player live advance one turn.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">movements</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attack_damage</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">items</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">health</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">turn_passing_actions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a Player.</span>
+
+<span class="sd">        @args:</span>
+<span class="sd">        movements ([nullary functions] | [] | ~None): leave None</span>
+<span class="sd">            so the Character will have the defaults movements (up, down, left, right).</span>
+<span class="sd">            Pass a list of nullary functions to specify your own movement functions.</span>
+<span class="sd">            Pass an empty list to explictly set no movements for this Character.</span>
+<span class="sd">        attack_damage (int, ~1): how much damage should this piece do when attacking</span>
+<span class="sd">        items ([Items] | ~None): the Items this piece should start with.</span>
+<span class="sd">            if None, items will be an empty list.</span>
+<span class="sd">        health (int, ~10): how much health should this character have.</span>
+<span class="sd">        turn_passing_actions ([str]): all the elements of the list should be</span>
+<span class="sd">            either method names or actions names. when in this list,</span>
+<span class="sd">            using one of these methods or using the Action.do method will</span>
+<span class="sd">            pass a turn on the character&#39;s board.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Character</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">movements</span><span class="p">,</span> <span class="n">attack_damage</span><span class="p">,</span>
+                           <span class="n">items</span><span class="p">,</span> <span class="n">health</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">turn_passing_actions</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;use_item&#39;</span><span class="p">,</span> <span class="s1">&#39;grab_item&#39;</span><span class="p">,</span> <span class="s1">&#39;move&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__pass_turn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;A decorator which makes a function pass a turn on the character&#39;s</span>
+<span class="sd">        home board.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">pass_wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">home_tile</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="n">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;home_tile&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">home_tile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">home_tile</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">turn</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">PieceIsNotOnATileError</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">res</span>
+        <span class="k">return</span> <span class="n">pass_wrapper</span>
+
+    <span class="k">def</span> <span class="nf">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Overriden __getattribute__ so that it applies the __pass_turn</span>
+<span class="sd">        decorator to the methods or actions on self.turn_passing_actions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">attr</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="n">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">object</span><span class="o">.</span><span class="n">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;turn_passing_actions&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">Action</span><span class="p">):</span>
+                <span class="n">attr</span><span class="o">.</span><span class="n">do</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__pass_turn</span><span class="p">(</span><span class="n">attr</span><span class="o">.</span><span class="n">do</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__pass_turn</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">attr</span></div>
+
+
+<div class="viewcode-block" id="NPC"><a class="viewcode-back" href="../../ludema.html#ludema.pieces.NPC">[docs]</a><span class="k">class</span> <span class="nc">NPC</span><span class="p">(</span><span class="n">Character</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">movements</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attack_damage</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">items</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">health</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">Character</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">movements</span><span class="p">,</span> <span class="n">attack_damage</span><span class="p">,</span>
+                           <span class="n">items</span><span class="p">,</span> <span class="n">health</span><span class="p">)</span></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Joaquin L. Pereyra.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

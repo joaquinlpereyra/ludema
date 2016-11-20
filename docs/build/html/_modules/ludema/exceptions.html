@@ -1,0 +1,243 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>ludema.exceptions &#8212; Ludema 1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="top" title="Ludema 1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for ludema.exceptions</h1><div class="highlight"><pre>
+<span></span><span class="k">class</span> <span class="nc">_GameError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="CharacterCantAttackError"><a class="viewcode-back" href="../../ludema.html#ludema.exceptions.CharacterCantAttackError">[docs]</a><span class="k">class</span> <span class="nc">CharacterCantAttackError</span><span class="p">(</span><span class="n">_GameError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">character</span><span class="p">):</span>
+        <span class="n">_GameError</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">character</span> <span class="o">=</span> <span class="n">character</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">error_string</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;The Character </span><span class="si">{0}</span><span class="s2"> doesn&#39;t have an attack_damage &quot;</span>
+                        <span class="s2">&quot;value and thus cannot attack.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">character</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">error_string</span></div>
+
+<div class="viewcode-block" id="TurnCanOnlyBeIncreased"><a class="viewcode-back" href="../../ludema.html#ludema.exceptions.TurnCanOnlyBeIncreased">[docs]</a><span class="k">class</span> <span class="nc">TurnCanOnlyBeIncreased</span><span class="p">(</span><span class="n">_GameError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prev_turn</span><span class="p">,</span> <span class="n">new_turn</span><span class="p">):</span>
+        <span class="n">_GameError</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prev_turn</span> <span class="o">=</span> <span class="n">prev_turn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new_turn</span> <span class="o">=</span> <span class="n">new_turn</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">error_string</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Someone tried to set the turn to </span><span class="si">{0}</span><span class="s2"> but the &quot;</span>
+                        <span class="s2">&quot;turn was already </span><span class="si">{1}</span><span class="s2">. You can&#39;t go back in time &quot;</span>
+                        <span class="s2">&quot;(at least not in turns)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_turn</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">prev_turn</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">error_string</span></div>
+
+<div class="viewcode-block" id="TurnsAreOver"><a class="viewcode-back" href="../../ludema.html#ludema.exceptions.TurnsAreOver">[docs]</a><span class="k">class</span> <span class="nc">TurnsAreOver</span><span class="p">(</span><span class="n">_GameError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">board</span><span class="p">):</span>
+        <span class="n">_GameError</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">board</span> <span class="o">=</span> <span class="n">board</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">error_string</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Turns are over on board </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">error_string</span></div>
+
+<div class="viewcode-block" id="TileIsEmptyError"><a class="viewcode-back" href="../../ludema.html#ludema.exceptions.TileIsEmptyError">[docs]</a><span class="k">class</span> <span class="nc">TileIsEmptyError</span><span class="p">(</span><span class="n">_GameError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">character</span><span class="p">,</span> <span class="n">tile</span><span class="p">,</span> <span class="n">error_string</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">_GameError</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">character</span> <span class="o">=</span> <span class="n">character</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tile</span> <span class="o">=</span> <span class="n">tile</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error_string</span> <span class="o">=</span> <span class="n">error_string</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_string</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">error_string</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;The Character </span><span class="si">{0}</span><span class="s2"> tried to attack tile </span><span class="si">{1}</span><span class="s2">, &quot;</span>
+                                 <span class="s2">&quot;but that tile does not have a character.&quot;</span>
+                                 <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">character</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tile</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">error_string</span></div>
+
+<div class="viewcode-block" id="NoItemToGrab"><a class="viewcode-back" href="../../ludema.html#ludema.exceptions.NoItemToGrab">[docs]</a><span class="k">class</span> <span class="nc">NoItemToGrab</span><span class="p">(</span><span class="n">_GameError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">character</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">character</span> <span class="o">=</span> <span class="n">character</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">error_string</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;The Character </span><span class="si">{0}</span><span class="s2"> tried to grab an item, &quot;</span>
+                        <span class="s2">&quot;but no item was found.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">character</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="PieceDoesNotHaveItemError"><a class="viewcode-back" href="../../ludema.html#ludema.exceptions.PieceDoesNotHaveItemError">[docs]</a><span class="k">class</span> <span class="nc">PieceDoesNotHaveItemError</span><span class="p">(</span><span class="n">_GameError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piece</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="n">_GameError</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">piece</span> <span class="o">=</span> <span class="n">piece</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">item</span> <span class="o">=</span> <span class="n">item</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">error_string</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;The Piece </span><span class="si">{0}</span><span class="s2"> doesn&#39;t have item </span><span class="si">{1}</span><span class="s2">&quot;</span>
+                        <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">item</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">error_string</span></div>
+
+<div class="viewcode-block" id="BoardError"><a class="viewcode-back" href="../../ludema.html#ludema.exceptions.BoardError">[docs]</a><span class="k">class</span> <span class="nc">BoardError</span><span class="p">(</span><span class="n">_GameError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_GameError</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PieceIsNotOnATileError"><a class="viewcode-back" href="../../ludema.html#ludema.exceptions.PieceIsNotOnATileError">[docs]</a><span class="k">class</span> <span class="nc">PieceIsNotOnATileError</span><span class="p">(</span><span class="n">BoardError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piece</span><span class="p">):</span>
+        <span class="n">BoardError</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">piece</span> <span class="o">=</span> <span class="n">piece</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">error_string</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;The Piece </span><span class="si">{0}</span><span class="s2"> isn&#39;t on a tile. Pieces must be &quot;</span>
+                        <span class="s2">&quot;put on a tile the Board.put_piece method &quot;</span>
+                        <span class="s2">&quot;before they can perform actions.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">error_string</span></div>
+
+<div class="viewcode-block" id="PieceIsNotOnThisBoardError"><a class="viewcode-back" href="../../ludema.html#ludema.exceptions.PieceIsNotOnThisBoardError">[docs]</a><span class="k">class</span> <span class="nc">PieceIsNotOnThisBoardError</span><span class="p">(</span><span class="n">BoardError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piece</span><span class="p">,</span> <span class="n">board</span><span class="p">):</span>
+        <span class="n">BoardError</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">board</span> <span class="o">=</span> <span class="n">board</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">error_string</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;The Piece </span><span class="si">{0}</span><span class="s2"> is trying to move to a tile in another &quot;</span>
+                        <span class="s2">&quot;board of name </span><span class="si">{1}</span><span class="s2">. Pieces must be put on a board &quot;</span>
+                        <span class="s2">&quot;with the Board.put_piece method before they move &quot;</span>
+                        <span class="s2">&quot;there.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">error_string</span></div>
+
+<div class="viewcode-block" id="OutOfBoardError"><a class="viewcode-back" href="../../ludema.html#ludema.exceptions.OutOfBoardError">[docs]</a><span class="k">class</span> <span class="nc">OutOfBoardError</span><span class="p">(</span><span class="n">BoardError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">board</span><span class="p">,</span> <span class="n">position</span><span class="p">):</span>
+        <span class="n">BoardError</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">board</span> <span class="o">=</span> <span class="n">board</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">position</span> <span class="o">=</span> <span class="n">position</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;The position </span><span class="si">{0}</span><span class="s2">, </span><span class="si">{1}</span><span class="s2"> doesn&#39; exist&quot;</span>
+               <span class="s2">&quot;on board </span><span class="si">{2}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                                     <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                                     <span class="bp">self</span><span class="o">.</span><span class="n">board</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="PositionOccupiedError"><a class="viewcode-back" href="../../ludema.html#ludema.exceptions.PositionOccupiedError">[docs]</a><span class="k">class</span> <span class="nc">PositionOccupiedError</span><span class="p">(</span><span class="n">BoardError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tile</span><span class="p">):</span>
+        <span class="n">BoardError</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tile</span> <span class="o">=</span> <span class="n">tile</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">error_string</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;The position </span><span class="si">{0}</span><span class="s2">, </span><span class="si">{1}</span><span class="s2"> is already &quot;</span>
+                        <span class="s2">&quot; occuppied on board </span><span class="si">{2}</span><span class="s2">&quot;</span>
+                        <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tile</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tile</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">tile</span><span class="o">.</span><span class="n">board</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">error_string</span></div>
+
+<div class="viewcode-block" id="BoardConstructionError"><a class="viewcode-back" href="../../ludema.html#ludema.exceptions.BoardConstructionError">[docs]</a><span class="k">class</span> <span class="nc">BoardConstructionError</span><span class="p">(</span><span class="n">BoardError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">BoardError</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WrongSizeOnY"><a class="viewcode-back" href="../../ludema.html#ludema.exceptions.WrongSizeOnY">[docs]</a><span class="k">class</span> <span class="nc">WrongSizeOnY</span><span class="p">(</span><span class="n">BoardConstructionError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">BoardConstructionError</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;The amount of lines on your constructor string does not match &quot;</span>
+                <span class="s2">&quot;the height of your board.&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WrongSizeOnX"><a class="viewcode-back" href="../../ludema.html#ludema.exceptions.WrongSizeOnX">[docs]</a><span class="k">class</span> <span class="nc">WrongSizeOnX</span><span class="p">(</span><span class="n">BoardConstructionError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">BoardConstructionError</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;The lentgh of one or more of the lines on your constructor &quot;</span>
+                <span class="s2">&quot;string does not match the width of your board.&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RowsOfDifferentSizes"><a class="viewcode-back" href="../../ludema.html#ludema.exceptions.RowsOfDifferentSizes">[docs]</a><span class="k">class</span> <span class="nc">RowsOfDifferentSizes</span><span class="p">(</span><span class="n">BoardConstructionError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">BoardConstructionError</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;The length of the lines on your constructor string &quot;</span>
+                <span class="s2">&quot;do not match. The board has to be a rectangle.&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ImpossibleToExtractPiece"><a class="viewcode-back" href="../../ludema.html#ludema.exceptions.ImpossibleToExtractPiece">[docs]</a><span class="k">class</span> <span class="nc">ImpossibleToExtractPiece</span><span class="p">(</span><span class="n">BoardConstructionError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">container</span><span class="p">):</span>
+        <span class="n">BoardConstructionError</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">container</span> <span class="o">=</span> <span class="n">container</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;I can&#39;t sensibly extract a piece from this container: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">container</span><span class="p">))</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Joaquin L. Pereyra.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
