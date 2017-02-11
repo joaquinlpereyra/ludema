@@ -1,0 +1,318 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>ludema.abstract.piece &mdash; Ludema 1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="Ludema 1 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Ludema
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <!-- Local TOC -->
+                <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">Ludema</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>ludema.abstract.piece</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for ludema.abstract.piece</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">colorama</span> <span class="k">import</span> <span class="n">Style</span>
+<span class="kn">from</span> <span class="nn">ludema.abstract.actions</span> <span class="k">import</span> <span class="n">Moving</span><span class="p">,</span> <span class="n">Attacking</span><span class="p">,</span> <span class="n">Grabbing</span>
+<span class="kn">from</span> <span class="nn">ludema.exceptions</span> <span class="k">import</span> <span class="n">PieceIsNotOnATileError</span>
+
+<div class="viewcode-block" id="Piece"><a class="viewcode-back" href="../../../ludema.html#ludema.abstract.piece.Piece">[docs]</a><span class="k">class</span> <span class="nc">Piece</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">walkable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">movements</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">attacks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">health</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">turn_increasing_actions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Defines a Piece, which is _anything_ that can</span>
+<span class="sd">        be represented on the map.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            Not intended to be used directly but rather should be used</span>
+<span class="sd">            as superclass.</span>
+
+<span class="sd">        The pieces have a Moving, Attacking and Grabbing interface. More information</span>
+<span class="sd">        about the interfaces is to be found in their documentation. Suffice</span>
+<span class="sd">        it to say that pieces act through them. There&#39;s more</span>
+<span class="sd">        info on how in the argument section and on the documentation of the</span>
+<span class="sd">        respective interfaces. The Moving interface is asigned to the</span>
+<span class="sd">        Piece.move variable, and Attacking to Piece.attack, the Grabbing</span>
+<span class="sd">        to Piece.grab, and so on.For example usage, see the bottom of this docstring.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            Pieces can always grab from the same places they can move to.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            letter (str): representation of piece on board. Should be of length 1</span>
+<span class="sd">            name (str): Name of the piece. Leave None for anonymous.</span>
+<span class="sd">            walkable (bool): Can the piece be walked over by other pieces?</span>
+<span class="sd">            movements ([nullary functions] | None | []): movements is the parameter</span>
+<span class="sd">                which will specify how the interface exposing the valid movements</span>
+<span class="sd">                for the piece will be created. Give a list of nullary functions</span>
+<span class="sd">                to specify your own movements functions, None to let the piece</span>
+<span class="sd">                have the default movements (up, down, right, left a tile) or</span>
+<span class="sd">                pass an empty list to explicity set NO movement functions for the piece.</span>
+<span class="sd">                Even if you set no movement functions for the piece, you&#39;ll still</span>
+<span class="sd">                have access to Moving.to_tile and Moving._unsafe_to_tile to manually</span>
+<span class="sd">                specify movements if you need to do so, but you should not use them</span>
+<span class="sd">                for normal I/O (specially not Moving._unsafe_to_tile).</span>
+<span class="sd">                You can also safely call self.move.random and</span>
+<span class="sd">                self.move.random_and_valid, but they won&#39;t produce a movement.</span>
+
+<span class="sd">                Defaults movements:</span>
+<span class="sd">                    Moving.up(), Moving.right(), Moving.left(), Moving.down()</span>
+
+<span class="sd">            attacks ([nullary function] | None | []): Defaults to None.</span>
+<span class="sd">                Exactly the same as movements, but for attacks. Default attacks</span>
+<span class="sd">                (those set when the attacks parameter is None) are up, down,</span>
+<span class="sd">                left,right a tile, with a base damage of 1.</span>
+
+<span class="sd">                Default attacks:</span>
+<span class="sd">                    Attacking.up(), Attacking.right(), Attacking.left(), Attacking.down()</span>
+
+<span class="sd">            health (int): how much Health Points should this piece have?</span>
+<span class="sd">                any negative number means &quot;infinite health&quot;</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            ::</span>
+<span class="sd">                first_level = Board(name=&quot;First Level&quot;, size_x=10, size_y=10)</span>
+
+<span class="sd">                bruma = Piece(&quot;@&quot;, &quot;Bruma&quot;)</span>
+<span class="sd">                first_level.put_piece(bruma, Position(1,1))</span>
+<span class="sd">                a_piece.move.up()  # will move the piece up a tile</span>
+<span class="sd">                a_piece.attack.left()  # will attack the tile at left of the piece</span>
+
+<span class="sd">                grass = Piece(&quot;*&quot;, walkable=True, movements=[], attacks=[])</span>
+<span class="sd">                first_level.put_piece(grass, Position(3,3))</span>
+<span class="sd">                grass_piece.move.to_tile(first_level.board[2,2])</span>
+<span class="sd">                grass_piece.move.up()  # error: method doesn&#39;t exist</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">letter</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">letter</span><span class="p">,</span> <span class="n">Style</span><span class="o">.</span><span class="n">RESET_ALL</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">walkable</span> <span class="o">=</span> <span class="n">walkable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__home_tile</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">health</span> <span class="o">=</span> <span class="n">health</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">move</span> <span class="o">=</span> <span class="n">Moving</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">movements</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attack</span> <span class="o">=</span> <span class="n">Attacking</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attacks</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grab</span> <span class="o">=</span> <span class="n">Grabbing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">movements</span><span class="p">)</span>  <span class="c1"># grab from same place they can move to</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">home_tile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;TThe tile where this piece belongs.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__home_tile</span>
+
+    <span class="nd">@home_tile</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">home_tile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">home_tile</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__home_tile</span> <span class="o">=</span> <span class="n">home_tile</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">position</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the position of the piece.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            PieceIsNotOnATileError if piece is not on a tile.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">home_tile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">home_tile</span><span class="o">.</span><span class="n">position</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PieceIsNotOnATileError</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">surroundings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;If object has a home_tile, return a dictionary that looks like</span>
+<span class="sd">        {Direction : Tile or None} for each of the four cardinal directions.</span>
+<span class="sd">        Value will be None if the direction is outside the map.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            PieceIsNotOnAtile if its home_tile is None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">home_tile</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PieceIsNotOnATileError</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="n">board</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">home_tile</span><span class="o">.</span><span class="n">board</span>
+        <span class="n">surroundings</span> <span class="o">=</span> <span class="n">board</span><span class="o">.</span><span class="n">get_adjacent_to_tile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">home_tile</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">surroundings</span>
+
+<div class="viewcode-block" id="Piece.on_touch_do"><a class="viewcode-back" href="../../../ludema.html#ludema.abstract.piece.Piece.on_touch_do">[docs]</a>    <span class="k">def</span> <span class="nf">on_touch_do</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">touching_piece</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;What should the piece do when it is touched by another piece?</span>
+<span class="sd">        IE: when a piece tries to move to the position this one occupies.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            touching_piece (Piece): the piece that touches this one</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Joaquin L. Pereyra.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

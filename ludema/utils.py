@@ -2,8 +2,13 @@ from ludema import exceptions
 from ludema.abstract.piece import Piece
 
 def copy_lists_in_dictionary(dict):
-    """Return a new dictionary with a shallow copy of the lists present on
-    the original dictionary.
+    """
+    Args:
+        dict (dict): just any dictionary.
+
+    Returns:
+        New dictionary with a shallow copy of the lists present on
+        the original dictionary.
     """
     new_dict = {}
     for k, v in dict.items():
@@ -15,17 +20,19 @@ def copy_lists_in_dictionary(dict):
 def extract_pieces_from_possible_containers(container):
     """Grabs a container, which from we can hopefully extract a list.
 
-    @args:
-    container (nullary function -> Piece | list | Piece): the container for the Piece
+    Args:
+        container (nullary function -> Piece | [Piece] | Piece): the container for the Piece
 
-    @raise:
-    ImpossibleToExtractPiece
+    Returns:
+        Piece: the piece which was in the container
 
-    @side effects:
-    If type(container) == list, this function pops the last element.
+    Raises:
+        ImpossibleToExtractPiece, if the container is not of correct type.
 
-    @return:
-    Piece
+    Note:
+        If type(container) == list, this function pops the last element and
+        modifies the list.
+
     """
     if callable(container):  # most probably a nullary function
         piece = container()
@@ -34,8 +41,7 @@ def extract_pieces_from_possible_containers(container):
     else: # we just have to hope this is a piece, really
         piece = container
 
-    # if your final product was a not a piece, we've goy a problem
+    # if your final product was a not a piece, we've got a problem
     if not isinstance(piece, Piece):
         raise exceptions.ImpossibleToExtractPiece(container)
     return piece
-

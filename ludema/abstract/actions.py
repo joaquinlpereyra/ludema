@@ -3,7 +3,8 @@ from functools import wraps
 from ludema.abstract.utils import Direction
 from ludema.exceptions import (PieceIsNotOnATileError,
                                PieceIsNotOnThisBoardError,
-                               TileIsEmptyError)
+                               TileIsEmptyError,
+                               NotGrabbableError)
 
 class Action:
     def __init__(self, piece, action_functions):
@@ -22,6 +23,7 @@ class Action:
 
     @property
     def is_implemented(self):
+        """Return True if action is implemented, False if it can't."""
         return True if self.possible_actions else False
 
     def _history_appender(self, func):
@@ -30,9 +32,6 @@ class Action:
             self.history.append(func.__name__)
             return func(*args, **kwargs)
         return history_wrapper
-
-    def _increment_piece_home_board_turn(self):
-        self.piece.home_tile.board.turn += 1
 
     def _normal_default_actions(self):
         """Just a collection of four extremely normal set of default actions.
@@ -63,10 +62,8 @@ class Action:
         four extremely common default function actions: the one which
         applies the action to the tiles above, at right, below and at left
         of the piece.
-
-        Every action class should implement this.
         """
-        raise NotImplementedError("The Action class shouldn't be used directly!")
+        return self._normal_default_actions()
 
     def _unsafe_do(self, tile):
         """Intended to actually perform the action. Should check all
@@ -74,7 +71,8 @@ class Action:
         Doesn't need to return anything. Shouldn't be used for I/O, instead
         use the do method for that.
 
-        Every action should implement this method.
+        Note:
+            Every action should implement this method.
         """
         raise NotImplementedError("The Action class shouldn't be used directly!")
 
@@ -92,7 +90,8 @@ class Action:
 
         All the action functions should ultimately use this method.
 
-        Every action should implement this method.
+        Note:
+            Every action should implement this method.
         """
         raise NotImplementedError("The Action class shouldn't be used directly!")
 
@@ -102,8 +101,8 @@ class Action:
         depending on the current position of the piece and what the action
         tries to do.
 
-        @return:
-        boolean, True if action was performed, False if not
+        Returns:
+            bool: True if action was performed, False if not
         """
         surprise_action = random.choice(self.possible_actions)
         was_action_valid = surprise_action()
@@ -115,9 +114,9 @@ class Action:
         If no actions from the list of possible actions, it will just return
         False.
 
-        @return:
-        boolean: True if there was a valid action to be made by the piece,
-                 False if the piece couldn't move anywhere
+        Returns:
+            bool: True if there was a valid action to be made by the piece,
+                False if the piece couldn't move anywhere
         """
         tries = 0
         random_action_performed = self.random()
@@ -132,10 +131,10 @@ class Action:
         """Call all possible actions from the list. The actions may or may
         not be performed depending on the action conditions.
 
-        @return:
-        A dicionary of {action_function_name, boolean} key-value pairs,
-        indicating which actions where actually performed (True) and which
-        not (False).
+        Returns:
+            dict: looks like {action_function_name, boolean} key-value pairs,
+            indicating which actions where actually performed (True) and which
+            not (False).
         """
         successes = {}
         for action_function in self.possible_actions:
@@ -147,9 +146,9 @@ class Action:
         """Call all possible actions from the list of possible actions,
         but stop once it can perform one successfully.
 
-        @return:
-        boolean: True if there was a valid action performed by the piece,
-                 False if no valid action was found.
+        Returns:
+            bool: True if there was a valid action performed by the piece,
+                     False if no valid action was found.
         """
         for action_function in self.possible_actions:
             success = action_function()
@@ -159,49 +158,33 @@ class Action:
             return False
 
 class Moving(Action):
-    """This clase represents the 'Move' interface owned by a MovablePiece
-    instance.
-    It's job is to hold functions that move the MovablePiece in a direction.
-    It also holds a list with all the posible movements the Piece can do,
-    so you can choose one at random or inspect them dynamically.
-    """
     def __init__(self, piece, movement_functions):
-        """Starts the object with an empty list of possible movements and
-        forces it to have at least the deafult ones.
-
-        @args:
-        piece (MovablePiece): the movable piece to which the movements refer
-        movement_functions ([nullary functions]): a list of valid
-            functions which as a side effect move the piece.
+        """
+        Args:
+            piece (Piece): the movable piece to which the movements refer
+            movement_functions ([nullary functions]): a list of valid
+                functions which as a side effect move the piece.
         """
         Action.__init__(self, piece, movement_functions)
         self.possible_movements = self.possible_actions
-
-    def _default_actions(self):
-        """Create and set the default movement functions (up, down, left,
-        right)
-
-        @return:
-        None
-        """
-        return self._normal_default_actions()
 
     def _unsafe_do(self, tile):
         """Move the object if it can.
         That means: unlink the piece from its current tile and link it
         to the new tile; unless there's a piece in the destiny tile already.
 
-        Can raise a PieceIsNotOnATileError if the piece hasn't been put on a
-        map prior to moving or a PieceIsNotOnThisBoardError if the piece
-        you're trying to move has an associated tile in another board, not
-        the one where the destinity tile is.
+        Args:
+            tile (Tile): the tile to which the piece will try to move
 
-        @args:
-        tile (Tile): the tile to which the piece will try to move
+        Returns:
+            bool: False if there was a piece on tile and it wasn't walkable,
+                  True if movement could be completed
 
-        @return:
-        bool: False if there was a piece on tile and it wasn't walkable,
-              True if movement could be completed
+        Raises:
+            PieceIsNotOnATileError: if the piece hasn't been put on a tile before
+                trying to move
+            PieceIsNotOnThisBoardError: if the piece you're trying to move
+                is in fact on another board
         """
         if not self.piece.home_tile:
             raise PieceIsNotOnATileError
@@ -223,11 +206,11 @@ class Moving(Action):
     def do(self, tile):
         """Move the object, if it can.
 
-        @args:
-        tile (Tile): the tile to which the piece will try to move.
+        Args:
+            tile (Tile): the tile to which the piece will try to move.
 
-        @return:
-        bool: True if piece could be moved, False if not
+        Returns:
+            bool: True if piece could be moved, False if not
         """
 
         if tile:
@@ -243,24 +226,12 @@ class Attacking(Action):
         Action.__init__(self, piece, attack_functions)
         self.possible_attacks = self.possible_actions
 
-    def _default_actions(self):
-        """Create and set the default attack functions (up, down, left,
-        right)
-
-        @return:
-        None
-        """
-        return self._normal_default_actions()
-
     def _unsafe_do(self, tile):
         """Attack a piece on tile passed as argument. If tile
         has no piece, raise a TileIsEmptyError.
 
-        @args:
-        tile (Tile): the tile which the piece will try to attack
-
-        @return:
-        None
+        Args:
+            tile (Tile): the tile which the piece will try to attack
         """
         if tile.piece is None:
             raise TileIsEmptyError(self.piece, tile)
@@ -272,12 +243,12 @@ class Attacking(Action):
         """Attack a tile passed as argument. Safe to use for I/O, should
         never raise an error.
 
-        @args:
-        tile (Tile): the tile which the piece will try to attack
+        Args:
+            tile (Tile): the tile which the piece will try to attack
 
-        @return:
-        bool: True if attack could be performed, False if attack failed
-        (because the tile didn't have a piece associated or it was None)
+        Returns:
+            bool: True if attack could be performed, False if attack failed
+            (because the tile didn't have a piece associated or it was None)
         """
         if tile:
             try:
@@ -285,5 +256,60 @@ class Attacking(Action):
                 return True
             except TileIsEmptyError:
                 return False
+        else:
+            return False
+
+class Grabbing(Action):
+    def __init__(self, piece, grab_functions):
+        Action.__init__(self, piece, grab_functions)
+        self.possible_grabs = self.possible_actions
+
+    def _unsafe_do(self, tile):
+        """Grabs from the tile passed as argument.
+
+        Args:
+            tile (Tile): the tile which the piece will try to attack
+
+        Raises:
+            NotGrabbableError if the piece on the tile can't be grabbed
+        """
+        if not callable(tile.piece.grab):
+            raise NotGrabbableError(tile.piece)
+
+        grabbable = tile.piece
+        grabbable.owner = self.piece
+        self.piece.items.append(grabbable)
+        tile.piece = None  # POPS!
+
+    def do(self, tile):
+        """Grabs from the tile passed as argument. Safe to use for I/O, should
+        never raise an error.
+
+        Args:
+            tile (Tile): the tile which the piece will try to grab from
+
+        Returns:
+            bool: True if something could be grabbed could be performed, False if grab failed
+        """
+        if not tile:
+            return False
+        try:
+            self._unsafe_do(tile)
+            return True
+        except TileIsEmptyError:
+            return False
+
+    def from_surroundings(self):
+        """Grabs an item from the surroundings of the Character.
+        Stops at first item grabbed.
+        Items look-up goes clockwise.
+
+        Returns:
+            bool: True if item found and grabbed, False otherwise.
+        """
+        for tile in self.piece.surroundings.values():
+            item_grabbed = self.do(tile)
+            if item_grabbed:
+                return True
         else:
             return False

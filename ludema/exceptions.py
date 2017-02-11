@@ -1,4 +1,5 @@
 class _GameError(Exception):
+    """Baseclass for all exceptions."""
     def __init__(self):
         pass
 
@@ -47,6 +48,14 @@ class TileIsEmptyError(_GameError):
                                  "but that tile does not have a character."
                                  .format(self.character, self.tile))
         return error_string
+
+class NotGrabbableError(_GameError):
+    def __init__(self, character, tile, error_string=None):
+        _GameError.__init__(self)
+        self.piece = piece
+
+    def __str__(self):
+        return "The piece {0} doesn't implement the grab method".format(self.piece)
 
 class NoItemToGrab(_GameError):
     def __init__(self, character):

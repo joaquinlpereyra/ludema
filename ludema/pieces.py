@@ -8,44 +8,57 @@ from ludema.exceptions import (PieceDoesNotHaveItemError, PieceIsNotOnATileError
                                PositionOccupiedError, NoItemToGrab)
 
 class Wall(Piece):
-    """A very simple piece to represent walls."""
     def __init__(self, letter="."):
+        """A very simple piece to represent walls.
+
+        Args:
+            letter (str): the letter which shall be used to represent it on the board
+        """
         Piece.__init__(self, letter)
 
 class Item(Piece):
-    """A class to represent items which can be owned and used by players
-    and NPCs alike. It's intended to be subclassed as to define their action.
-    """
     def __init__(self, letter, name, owner=None):
-        """Initiates an item.
+        """A class to represent items which can be owned and used by players
+        and NPCs alike. It's intended to be subclassed as to define their action.
 
-        @args:
-        letter (str): the letter by which the item will be represented
-        name (str): the name of the item
-        owner (Piece, ~None): the owner of the piece.
+        Args:
+            letter (str): the letter by which the item will be represented
+            name (str): the name of the item
+            owner (Piece): the owner of the item.
+
+        Warning:
+            This class should not be used directly, but rather as a subclass
+            for your own items.
         """
         Piece.__init__(self, letter, name)
         self.owner = owner
 
     @property
     def has_owner(self):
-        """Return True if the Item has an owner, False otherwise."""
+        """True if the Item has an owner, False otherwise."""
         return False if self.owner is None else True
 
     def do_action(self):
+        """This method will be called when a Character uses the item.
+
+        Warning:
+            All subclasses should implement this method.
+        """
         raise NotImplementedError("Every item should have its own do_action method!")
 
 class ShortRangeItem(Item):
-    """A class to represent items which can only affect its surroundings,
-    both if carried by an owner of if it lies on the ground.
-    """
     def __init__(self, letter, name, owner=None):
-        """Initiates a short range item.
+        """A class to represent items which can only affect its surroundings,
+        both if carried by an owner of if it lies on the ground.
 
-        @args:
-        letter (str): the letter by which the item will be represented
-        name (str): the name of the item
-        owner (Piece, ~None): the owner of the piece.
+        Args:
+            letter (str): the letter by which the item will be represented
+            name (str): the name of the item
+            owner (Piece): the owner of the item.
+
+        Warning:
+            This class should not be used directly, but rather as a subclass
+            for your own items.
         """
         Item.__init__(self, letter, name, owner)
 
@@ -64,29 +77,31 @@ class ShortRangeItem(Item):
         else:
             return only_valid_from(self.surroundings.values()) if self.home_tile else None
 
-    def do_action(self):
-        raise NotImplementedError("Every item should have its own do_action method!")
-
 
 class Character(Piece):
-    """A baseclass for all characters, be them the Player, NPCs or enemies.
-    Should not be used directly.
-    """
     def __init__(self, letter, name, movements=None, attack_damage=1,
                  items=None, health=10):
-        """Init a Character.
+        """A baseclass for all characters, be them the Player, NPCs or enemies.
 
-        @args:
-        letter (str): the letter by which the item will be represented
-        name (str): the name of the item
-        movements ([nullary functions] | [] | ~None): leave None
-            so the Character will have the defaults movements (up, down, left, right).
-            Pass a list of nullary functions to specify your own movement functions.
-            Pass an empty list to explictly set no movements for this Character.
-        attack_damage (int, ~1): how much damage should this piece do when attacking
-        items ([Items] | ~None): the Items this piece should start with.
-            if None, items will be an empty list.
-        health (int, ~10): how much health should this character have.
+        Args:
+            letter (str): the letter by which the item will be represented
+            name (str): the name of the item
+            movements ([nullary functions] | [] | None): leave None
+                so the Character will have the defaults movements (up, down, left, right).
+                Pass a list of nullary functions to specify your own movement functions.
+                Pass an empty list to explictly set no movements for this Character.
+            attack_damage (int): how much damage should this piece do when attacking
+            items ([Items]): the Items this piece should start with.
+                If left None, items will be an empty list.
+            health (int): how much health should this character have.
+
+        Warning:
+            This class should not be used directly, but rather subclassed to create
+            your own Characters.
+
+            If you're looking for a class for the main character, use or subclass
+            :class:`~ludema.pieces.Player`. If you want an NPC,
+            either friendly or unfriendly, use :class:`~ludema.pieces.NPC`.
         """
         Piece.__init__(self, letter, name, movements)
         self.items = items or []
@@ -137,86 +152,47 @@ class Character(Piece):
         except (PieceDoesNotHaveItemError, PieceIsNotOnATileError):
             return False, None
 
-    def _unsafe_grab_item(self, tile_where_item_is):
-        """Grabs the item from tile_where_item_is. Will throw an exception
-        if the Piece on tile_where_item_is is not an Item.
-
-        @args:
-        tile_where_item_is (Tile): the tile where the item should be located
-
-        @raise:
-        NoItemToGrab
-        """
-        if not isinstance(tile_where_item_is.piece, Item):
-            raise NoItemToGrab(self)
-
-        self.items.append(tile_where_item_is.piece)
-        tile_where_item_is.piece.owner = self
-        tile_where_item_is.piece = None
-
-    def grab_item(self, tile_where_item_is):
-        """Grabs an item from tile_where item is.
-
-        @args:
-        tile_where_item_is (Tile): the tile where the item should be located
-
-        @return:
-        True if item could be grabbed (an item was found on tile_where_item_is)
-        or False if it wasn't found there
-        """
-        try:
-            self._unsafe_grab_item(tile_where_item_is)
-            return True
-        except NoItemToGrab:
-            return False
-
-    def grab_item_from_surroundings(self):
-        """Grabs an item from the surroundings of the Character.
-        Stops at first item grabbed.
-        Items look-up goes clockwise.
-
-        @return:
-        True if item found and grabbed, False otherwise.
-        """
-        for tile in self.surroundings.values():
-            item_grabbed = self.grab_item(tile)
-            if item_grabbed:
-                return True
-        else:
-            return False
-
     def do_passive_action(self):
+        """This method will be called whenever a turn passes on the board
+        this Character lives in. Default behavior is to do nothing. Feel free
+        to override.
+
+        Note:
+            You must respect the method's signature, that is, this method
+            should take no parameters appart from self.
+        """
         pass
 
-    def do_active_action(self):
+    # TODO: implement
+    def __do_active_action(self):
         pass
 
 
 class Player(Character):
-    """The Player character. The most important characteristic of the Player
-    is that some of its methods, when called, will make the board in which
-    this Player live advance one turn."""
     def __init__(self, letter, name, movements=None, attack_damage=1, items=None,
                  health=10, turn_passing_actions=None):
-        """Create a Player.
+        """The Player character. The most important characteristic of the Player
+        is that some of its methods, when called, will make the board in which
+        the Player lives advance one turn.
 
-        @args:
-        movements ([nullary functions] | [] | ~None): leave None
-            so the Character will have the defaults movements (up, down, left, right).
-            Pass a list of nullary functions to specify your own movement functions.
-            Pass an empty list to explictly set no movements for this Character.
-        attack_damage (int, ~1): how much damage should this piece do when attacking
-        items ([Items] | ~None): the Items this piece should start with.
-            if None, items will be an empty list.
-        health (int, ~10): how much health should this character have.
-        turn_passing_actions ([str]): all the elements of the list should be
-            either method names or actions names. when in this list,
-            using one of these methods or using the Action.do method will
-            pass a turn on the character's board.
+        Args:
+            movements ([nullary functions] | [] | None): leave None
+                so the Character will have the defaults movements (up, down, left, right).
+                Pass a list of nullary functions to specify your own movement functions.
+                Pass an empty list to explictly set no movements for this Character.
+            attack_damage (int): how much damage should this piece do when attacking
+            items ([Items]): the Items this piece should start with. Leave None to
+                start with no items.
+            health (int): how much health should this character have.
+            turn_passing_actions ([str]): all the elements of the list should be
+                either method names or actions names. when in this list,
+                using one of these methods or using the Action.do method will
+                pass a turn on the character's board. If left on None,
+                moving, grabbing an item and attacking will pass a turn.
         """
         Character.__init__(self, letter, name, movements, attack_damage,
                            items, health)
-        self.turn_passing_actions = ['use_item', 'grab_item', 'move']
+        self.turn_passing_actions = turn_passing_actions or ['use_item', 'grab_item', 'move']
 
     def __pass_turn(self, func):
         """A decorator which makes a function pass a turn on the character's
@@ -251,4 +227,3 @@ class NPC(Character):
                  items=None, health=10):
         Character.__init__(self, letter, name, movements, attack_damage,
                            items, health)
-

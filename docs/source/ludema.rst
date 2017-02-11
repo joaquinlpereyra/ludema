@@ -60,3 +60,29 @@ Module contents
     :members:
     :undoc-members:
     :show-inheritance:
+
+ludema.abstract package
+==============
+
+.. automodule:: ludema.abstract
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Submodules
+--------------
+
+.. automodule:: ludema.abstract.piece
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: ludema.abstract.actions
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: ludema.abstract.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:

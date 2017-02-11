@@ -1,0 +1,506 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>ludema.abstract.actions &mdash; Ludema 1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="Ludema 1 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Ludema
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <!-- Local TOC -->
+                <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">Ludema</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>ludema.abstract.actions</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for ludema.abstract.actions</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">wraps</span>
+<span class="kn">from</span> <span class="nn">ludema.abstract.utils</span> <span class="k">import</span> <span class="n">Direction</span>
+<span class="kn">from</span> <span class="nn">ludema.exceptions</span> <span class="k">import</span> <span class="p">(</span><span class="n">PieceIsNotOnATileError</span><span class="p">,</span>
+                               <span class="n">PieceIsNotOnThisBoardError</span><span class="p">,</span>
+                               <span class="n">TileIsEmptyError</span><span class="p">,</span>
+                               <span class="n">NotGrabbableError</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Action"><a class="viewcode-back" href="../../../ludema.html#ludema.abstract.actions.Action">[docs]</a><span class="k">class</span> <span class="nc">Action</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piece</span><span class="p">,</span> <span class="n">action_functions</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">possible_actions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">piece</span> <span class="o">=</span> <span class="n">piece</span>
+        <span class="k">if</span> <span class="n">action_functions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">action_functions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_actions</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_actions</span><span class="p">(</span><span class="n">action_functions</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="n">attr</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="n">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">object</span><span class="o">.</span><span class="n">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;possible_actions&#39;</span><span class="p">):</span>
+            <span class="n">attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_history_appender</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">attr</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_implemented</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return True if action is implemented, False if it can&#39;t.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">possible_actions</span> <span class="k">else</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_history_appender</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">history_wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">history_wrapper</span>
+
+    <span class="k">def</span> <span class="nf">_normal_default_actions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Just a collection of four extremely normal set of default actions.</span>
+<span class="sd">        The ones who apply the action to the tile up, right, left and down</span>
+<span class="sd">        of the piece.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">up</span><span class="p">():</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">surroundings</span><span class="p">[</span><span class="n">Direction</span><span class="o">.</span><span class="n">UP</span><span class="p">])</span>
+        <span class="k">def</span> <span class="nf">right</span><span class="p">():</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">surroundings</span><span class="p">[</span><span class="n">Direction</span><span class="o">.</span><span class="n">RIGHT</span><span class="p">])</span>
+        <span class="k">def</span> <span class="nf">down</span><span class="p">():</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">surroundings</span><span class="p">[</span><span class="n">Direction</span><span class="o">.</span><span class="n">DOWN</span><span class="p">])</span>
+        <span class="k">def</span> <span class="nf">left</span><span class="p">():</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">surroundings</span><span class="p">[</span><span class="n">Direction</span><span class="o">.</span><span class="n">LEFT</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">up</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">down</span><span class="p">,</span> <span class="n">left</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_set_actions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action_functions</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the action_funcions as methods of the class</span>
+<span class="sd">        and append them to the possible_actions list.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">action_function</span> <span class="ow">in</span> <span class="n">action_functions</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">possible_actions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">action_function</span><span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action_function</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">action_function</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_default_actions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;These will be the default action functions. Every action should</span>
+<span class="sd">        implement them, but the _normal_default_actions method give you</span>
+<span class="sd">        four extremely common default function actions: the one which</span>
+<span class="sd">        applies the action to the tiles above, at right, below and at left</span>
+<span class="sd">        of the piece.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normal_default_actions</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_unsafe_do</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tile</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Intended to actually perform the action. Should check all</span>
+<span class="sd">        action conditions and raise an appropiate error if they are not met.</span>
+<span class="sd">        Doesn&#39;t need to return anything. Shouldn&#39;t be used for I/O, instead</span>
+<span class="sd">        use the do method for that.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            Every action should implement this method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;The Action class shouldn&#39;t be used directly!&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Action.do"><a class="viewcode-back" href="../../../ludema.html#ludema.abstract.actions.Action.do">[docs]</a>    <span class="k">def</span> <span class="nf">do</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tile</span><span class="p">,</span> <span class="n">dont_pass_turn</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Inteded as a safe wraper for _unsafe_do. Should take a tile</span>
+<span class="sd">        indicating where the action must be performed. Should return a bolean</span>
+<span class="sd">        indicating if the action could be performed or not. Should be capable</span>
+<span class="sd">        of handling I/O without raising any exceptions.</span>
+
+<span class="sd">        Useful for one-use-cases for the actions, if you want to extraordinarily</span>
+<span class="sd">        perform an action to a tile. For ordinary uses, use the actions in the</span>
+<span class="sd">        possible_actions lists. For example, if a piece moves up,down,left,right</span>
+<span class="sd">        alsways, set those as actions functions. If a magician teleports the</span>
+<span class="sd">        piece somewhere, you can use this function to move it there.</span>
+
+<span class="sd">        All the action functions should ultimately use this method.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            Every action should implement this method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;The Action class shouldn&#39;t be used directly!&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Action.random"><a class="viewcode-back" href="../../../ludema.html#ludema.abstract.actions.Action.random">[docs]</a>    <span class="k">def</span> <span class="nf">random</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Call a random function from the possible actions</span>
+<span class="sd">        list. Keep in mind that the action may or may not be performed,</span>
+<span class="sd">        depending on the current position of the piece and what the action</span>
+<span class="sd">        tries to do.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True if action was performed, False if not</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">surprise_action</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">possible_actions</span><span class="p">)</span>
+        <span class="n">was_action_valid</span> <span class="o">=</span> <span class="n">surprise_action</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">was_action_valid</span></div>
+
+<div class="viewcode-block" id="Action.random_and_valid"><a class="viewcode-back" href="../../../ludema.html#ludema.abstract.actions.Action.random_and_valid">[docs]</a>    <span class="k">def</span> <span class="nf">random_and_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Call a random function from the possible actions,</span>
+<span class="sd">        making sure that the action is actually possible for the piece.</span>
+<span class="sd">        If no actions from the list of possible actions, it will just return</span>
+<span class="sd">        False.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True if there was a valid action to be made by the piece,</span>
+<span class="sd">                False if the piece couldn&#39;t move anywhere</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tries</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">random_action_performed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">random_action_performed</span><span class="p">:</span>
+            <span class="n">random_action_performed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+            <span class="n">tries</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">tries</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">possible_actions</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="Action.all"><a class="viewcode-back" href="../../../ludema.html#ludema.abstract.actions.Action.all">[docs]</a>    <span class="k">def</span> <span class="nf">all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Call all possible actions from the list. The actions may or may</span>
+<span class="sd">        not be performed depending on the action conditions.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: looks like {action_function_name, boolean} key-value pairs,</span>
+<span class="sd">            indicating which actions where actually performed (True) and which</span>
+<span class="sd">            not (False).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">successes</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">action_function</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">possible_actions</span><span class="p">:</span>
+            <span class="n">success</span> <span class="o">=</span> <span class="n">action_function</span><span class="p">()</span>
+            <span class="n">successes</span><span class="p">[</span><span class="n">action_function</span><span class="o">.</span><span class="n">__name__</span><span class="p">]</span> <span class="o">=</span> <span class="n">success</span>
+        <span class="k">return</span> <span class="n">successes</span></div>
+
+<div class="viewcode-block" id="Action.until_success"><a class="viewcode-back" href="../../../ludema.html#ludema.abstract.actions.Action.until_success">[docs]</a>    <span class="k">def</span> <span class="nf">until_success</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Call all possible actions from the list of possible actions,</span>
+<span class="sd">        but stop once it can perform one successfully.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True if there was a valid action performed by the piece,</span>
+<span class="sd">                     False if no valid action was found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">action_function</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">possible_actions</span><span class="p">:</span>
+            <span class="n">success</span> <span class="o">=</span> <span class="n">action_function</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">success</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div></div>
+
+<div class="viewcode-block" id="Moving"><a class="viewcode-back" href="../../../ludema.html#ludema.abstract.actions.Moving">[docs]</a><span class="k">class</span> <span class="nc">Moving</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piece</span><span class="p">,</span> <span class="n">movement_functions</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            piece (Piece): the movable piece to which the movements refer</span>
+<span class="sd">            movement_functions ([nullary functions]): a list of valid</span>
+<span class="sd">                functions which as a side effect move the piece.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Action</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piece</span><span class="p">,</span> <span class="n">movement_functions</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">possible_movements</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">possible_actions</span>
+
+    <span class="k">def</span> <span class="nf">_unsafe_do</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tile</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Move the object if it can.</span>
+<span class="sd">        That means: unlink the piece from its current tile and link it</span>
+<span class="sd">        to the new tile; unless there&#39;s a piece in the destiny tile already.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tile (Tile): the tile to which the piece will try to move</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: False if there was a piece on tile and it wasn&#39;t walkable,</span>
+<span class="sd">                  True if movement could be completed</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            PieceIsNotOnATileError: if the piece hasn&#39;t been put on a tile before</span>
+<span class="sd">                trying to move</span>
+<span class="sd">            PieceIsNotOnThisBoardError: if the piece you&#39;re trying to move</span>
+<span class="sd">                is in fact on another board</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">home_tile</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PieceIsNotOnATileError</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">home_tile</span><span class="o">.</span><span class="n">board</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">tile</span><span class="o">.</span><span class="n">board</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PieceIsNotOnThisBoardError</span>
+
+        <span class="k">if</span> <span class="n">tile</span><span class="o">.</span><span class="n">piece</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tile</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">on_touch_do</span><span class="p">(</span><span class="n">touching_piece</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">piece</span><span class="p">)</span>
+            <span class="c1"># what if tile.piece.on_touch_do actually moved the touched piece?</span>
+            <span class="c1"># it could have, so we need to check if tile.piece still has</span>
+            <span class="c1"># a piece...</span>
+            <span class="k">if</span> <span class="n">tile</span><span class="o">.</span><span class="n">piece</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">tile</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">walkable</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">home_tile</span><span class="o">.</span><span class="n">piece</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">tile</span><span class="o">.</span><span class="n">piece</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">piece</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="Moving.do"><a class="viewcode-back" href="../../../ludema.html#ludema.abstract.actions.Moving.do">[docs]</a>    <span class="k">def</span> <span class="nf">do</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tile</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Move the object, if it can.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tile (Tile): the tile to which the piece will try to move.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True if piece could be moved, False if not</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">tile</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unsafe_do</span><span class="p">(</span><span class="n">tile</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="n">PieceIsNotOnATileError</span><span class="p">,</span> <span class="n">PieceIsNotOnThisBoardError</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div></div>
+
+<div class="viewcode-block" id="Attacking"><a class="viewcode-back" href="../../../ludema.html#ludema.abstract.actions.Attacking">[docs]</a><span class="k">class</span> <span class="nc">Attacking</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piece</span><span class="p">,</span> <span class="n">attack_functions</span><span class="p">):</span>
+        <span class="n">Action</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piece</span><span class="p">,</span> <span class="n">attack_functions</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">possible_attacks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">possible_actions</span>
+
+    <span class="k">def</span> <span class="nf">_unsafe_do</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tile</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Attack a piece on tile passed as argument. If tile</span>
+<span class="sd">        has no piece, raise a TileIsEmptyError.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tile (Tile): the tile which the piece will try to attack</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">tile</span><span class="o">.</span><span class="n">piece</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TileIsEmptyError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">piece</span><span class="p">,</span> <span class="n">tile</span><span class="p">)</span>
+
+        <span class="n">attacked_piece</span> <span class="o">=</span> <span class="n">tile</span><span class="o">.</span><span class="n">piece</span>
+        <span class="n">attacked_piece</span><span class="o">.</span><span class="n">health</span> <span class="o">-=</span> <span class="bp">self</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">attack_damage</span>
+
+<div class="viewcode-block" id="Attacking.do"><a class="viewcode-back" href="../../../ludema.html#ludema.abstract.actions.Attacking.do">[docs]</a>    <span class="k">def</span> <span class="nf">do</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tile</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Attack a tile passed as argument. Safe to use for I/O, should</span>
+<span class="sd">        never raise an error.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tile (Tile): the tile which the piece will try to attack</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True if attack could be performed, False if attack failed</span>
+<span class="sd">            (because the tile didn&#39;t have a piece associated or it was None)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">tile</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_unsafe_do</span><span class="p">(</span><span class="n">tile</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">except</span> <span class="n">TileIsEmptyError</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div></div>
+
+<div class="viewcode-block" id="Grabbing"><a class="viewcode-back" href="../../../ludema.html#ludema.abstract.actions.Grabbing">[docs]</a><span class="k">class</span> <span class="nc">Grabbing</span><span class="p">(</span><span class="n">Action</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piece</span><span class="p">,</span> <span class="n">grab_functions</span><span class="p">):</span>
+        <span class="n">Action</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piece</span><span class="p">,</span> <span class="n">grab_functions</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">possible_grabs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">possible_actions</span>
+
+    <span class="k">def</span> <span class="nf">_unsafe_do</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tile</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Grabs from the tile passed as argument.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tile (Tile): the tile which the piece will try to attack</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            NotGrabbableError if the piece on the tile can&#39;t be grabbed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">tile</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">grab</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">NotGrabbableError</span><span class="p">(</span><span class="n">tile</span><span class="o">.</span><span class="n">piece</span><span class="p">)</span>
+
+        <span class="n">grabbable</span> <span class="o">=</span> <span class="n">tile</span><span class="o">.</span><span class="n">piece</span>
+        <span class="n">grabbable</span><span class="o">.</span><span class="n">owner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">piece</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">grabbable</span><span class="p">)</span>
+        <span class="n">tile</span><span class="o">.</span><span class="n">piece</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># POPS!</span>
+
+<div class="viewcode-block" id="Grabbing.do"><a class="viewcode-back" href="../../../ludema.html#ludema.abstract.actions.Grabbing.do">[docs]</a>    <span class="k">def</span> <span class="nf">do</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tile</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Grabs from the tile passed as argument. Safe to use for I/O, should</span>
+<span class="sd">        never raise an error.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tile (Tile): the tile which the piece will try to grab from</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True if something could be grabbed could be performed, False if grab failed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tile</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_unsafe_do</span><span class="p">(</span><span class="n">tile</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="n">TileIsEmptyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="Grabbing.from_surroundings"><a class="viewcode-back" href="../../../ludema.html#ludema.abstract.actions.Grabbing.from_surroundings">[docs]</a>    <span class="k">def</span> <span class="nf">from_surroundings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Grabs an item from the surroundings of the Character.</span>
+<span class="sd">        Stops at first item grabbed.</span>
+<span class="sd">        Items look-up goes clockwise.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True if item found and grabbed, False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">tile</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">piece</span><span class="o">.</span><span class="n">surroundings</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">item_grabbed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="n">tile</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">item_grabbed</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Joaquin L. Pereyra.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
