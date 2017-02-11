@@ -94,6 +94,8 @@ class Board:
     def turn(self):
         """This property defines the turns passed on the board.
         You can increment it as you wish, but you can never decrement it.
+        Keep in mind that increasing this number will cause reactions from
+        the characters on the board.
         """
         return self._turn
 

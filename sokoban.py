@@ -5,6 +5,7 @@ from ludema.screen import Screen
 from ludema.board import Board
 from ludema.pieces import Wall, Player, Piece
 from ludema.user_input import user_input
+from ludema.levels import Level, Levels
 
 # We create a player. It will be green, named "Guy" and represented on the board
 # by the Ψ character (Ψ = 03A8 in unicode)
@@ -106,14 +107,16 @@ leyend = {'*': wall,
 #ludema takes care of everything else
 board = Board.new_from_blueprint("First", level1, leyend, win_conditions, lose_conditions)
 
+def on_won():
+    print("WON!")
+    return True
+
+def on_lost():
+    print("LOST!")
+    return False
+
 # this is just a continous loop to play the level
 # it will probably be abstracted away in future versions of ludema
-colorama.init(autoreset=True)
-screen = Screen(lambda: print(board), control_guy)
-while True:
-    screen.show(clear_after=True)
-    if board.lost or board.won:
-        screen.show(clear_after=True)
-        break
-if board.won:
-    print("ALL BOXES IN PLACE. YOU WON!!!!")
+level1 = Level(board, control_guy, on_won, on_lost)
+levels = Levels([level1], lambda: print("WON ALL!"), lambda: print("LOST ALL!"))
+levels.play_all()
